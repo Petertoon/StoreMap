@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -68,11 +69,18 @@
       position: absolute; top: -50px; left: 64px; right: 12px; font-size: 13px; font-weight: 600; color: #111;
       background: rgba(255,255,255,0.96); padding: 6px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: none;
     }
+    #filter-box {
+      position: absolute; top: 12px; left: 12px; z-index: 5; background: rgba(255,255,255,0.97); border-radius: 12px;
+      padding: 10px 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); font-size: 15px; font-weight: 600; color: #111;
+    }
+    #filter-box label { display: flex; align-items: center; gap: 10px; padding: 5px 0; cursor: pointer; white-space: nowrap; }
+    #filter-box input { width: 20px; height: 20px; accent-color: #1565c0; margin: 0; }
     .me-dot { width: 16px; height: 16px; border-radius: 50%; background: #1a73e8; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(21,101,192,0.35), 0 1px 4px rgba(0,0,0,0.4); }
   </style>
 </head>
 <body>
   <div id="map"></div>
+  <div id="filter-box" style="display:none"></div>
   <div id="bottom-panel">
     <button id="locate-btn" aria-label="Show my location" title="Show my location">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"><path d="M3 11 21 3l-8 18-2-8-8-2z"/></svg>
@@ -101,6 +109,28 @@
     });
 
     let allStores = new Map();
+
+    // ---- CATEGORY FILTER ----
+    // The five groups shown in the checkbox box. Names must match the CMS "category" text (case and & vs "and" don't matter).
+    const CATEGORIES = ["Food & Drink", "Shopping & Gifts", "Home & Hardware", "Auto & Equipment", "Services"];
+    const OTHER = "Other";
+    const norm = (s) => String(s || "").toLowerCase().replace(/\band\b/g, "&").replace(/\s+/g, " ").trim();
+    const catOf = (r) => CATEGORIES.find((c) => norm(c) === norm(r.category)) || OTHER;
+    const activeCats = new Set([...CATEGORIES, OTHER]);
+    const isShown = (r) => activeCats.has(catOf(r));
+
+    function buildFilterBox() {
+      const box = document.getElementById("filter-box");
+      const hasOther = Array.from(allStores.values()).some((r) => catOf(r) === OTHER);
+      const names = hasOther ? [...CATEGORIES, OTHER] : CATEGORIES;
+      box.innerHTML = names.map((c) => '<label><input type="checkbox" checked data-cat="' + esc(c) + '"> ' + esc(c) + "</label>").join("");
+      box.style.display = "";
+      box.addEventListener("change", (e) => {
+        const c = e.target.dataset.cat;
+        if (e.target.checked) activeCats.add(c); else activeCats.delete(c);
+        renderMarkers();
+      });
+    }
     const key = (r) => r.sourceSite + "_" + r.id;
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -109,6 +139,7 @@
         const res = await fetch(API_ENDPOINT);
         const json = await res.json();
         for (const r of json.stores || []) allStores.set(key(r), r);
+        buildFilterBox();
         renderMarkers();
         fitToStores();
       } catch (err) {
@@ -252,7 +283,7 @@
     function toGeoJSON() {
       return {
         type: "FeatureCollection",
-        features: Array.from(allStores.values()).map((r) => ({
+        features: Array.from(allStores.values()).filter(isShown).map((r) => ({
           type: "Feature",
           geometry: { type: "Point", coordinates: [r.lng, r.lat] },
           properties: { id: key(r), name: r.name || "" },
@@ -359,7 +390,7 @@
 
     function renderCardStrip() {
       const bounds = map.getBounds();
-      const visible = Array.from(allStores.values()).filter((r) => bounds.contains([r.lng, r.lat]));
+      const visible = Array.from(allStores.values()).filter((r) => isShown(r) && bounds.contains([r.lng, r.lat]));
       document.getElementById("result-count").textContent =
         visible.length ? visible.length + " store" + (visible.length === 1 ? "" : "s") : "";
 
