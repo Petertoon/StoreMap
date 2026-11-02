@@ -6,7 +6,7 @@
     "apiKeyEnv": "WIX_API_KEY_SITE1",
     "accountIdEnv": "WIX_ACCOUNT_ID_SITE1",
     "siteIdEnv": "WIX_SITE_ID_SITE1",
-    "collectionId": "Stores",
+    "collectionId": "FeaturedStores",
     "fields": {
       "name": "title",
       "lat": "lat",
@@ -29,7 +29,7 @@
     "apiKeyEnv": "WIX_API_KEY_SITE2",
     "accountIdEnv": "WIX_ACCOUNT_ID_SITE2",
     "siteIdEnv": "WIX_SITE_ID_SITE2",
-    "collectionId": "Stores",
+    "collectionId": "FeaturedStores",
     "fields": {
       "name": "title",
       "lat": "lat",
