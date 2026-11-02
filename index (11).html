@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Store Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    #bottom-panel {
+      position: absolute; bottom: var(--panel-bottom, 0px); left: 0; right: 0; z-index: 1; background: #fafafa;
+      border-radius: 20px; box-shadow: 0 -2px 14px rgba(0,0,0,0.25);
+      transition: transform 0.28s ease; padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    #bottom-panel.collapsed { transform: translateY(calc(100% - 34px)); }
+    #panel-handle { display: flex; justify-content: center; align-items: center; height: 24px; cursor: pointer; touch-action: none; }
+    #panel-handle .bar { width: 44px; height: 5px; border-radius: 3px; background: #bdbdbd; }
+    #result-count { text-align: center; font-weight: 700; font-size: 15px; color: #111; padding-bottom: 6px; min-height: 4px; }
+    #card-strip { display: flex; gap: 10px; overflow-x: auto; padding: 0 12px 12px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+    .store-card {
+      flex: 0 0 min(62vw, 270px); scroll-snap-align: start; background: #fff; border-radius: 14px; overflow: hidden;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.18); transition: transform 0.15s ease;
+    }
+    .store-card.active { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .card-photos {
+      display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100px; background: #e2e2e2;
+      touch-action: pan-x; scrollbar-width: none;
+    }
+    .card-photos::-webkit-scrollbar { display: none; }
+    .card-photos img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
+    .card-photos.empty { align-items: center; justify-content: center; }
+    .card-photos.empty::before { content: "🏬"; font-size: 34px; opacity: 0.4; }
+    .card-body { padding: 7px 10px 10px; }
+    .card-top-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .card-name { font-size: 15px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-status {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+      padding: 3px 8px; border-radius: 12px; white-space: nowrap; flex-shrink: 0; background: #e0e0e0; color: #333;
+    }
+    .card-status.status-open { background: #d7f0dd; color: #1e6b34; }
+    .card-status.status-closed { background: #fbe0e0; color: #9b1c1c; }
+    .card-status.status-paused { background: #fbe9cf; color: #93590a; }
+    .card-info { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 46px; }
+    .card-text { min-width: 0; }
+    .card-meta { font-size: 12px; font-weight: 600; color: #777; margin-top: 2px; }
+    .card-hours { font-size: 12px; font-weight: 700; margin-top: 2px; color: #777; }
+    .card-hours.open { color: #1e6b34; }
+    .card-hours.closed { color: #9b1c1c; }
+    .card-hours.soon { color: #93590a; }
+    .card-address { font-size: 12px; color: #777; margin-top: 2px; }
+    .rating-ring { flex: 0 0 46px; width: 46px; height: 46px; }
+    .card-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+    .card-btn {
+      display: block; text-align: center; padding: 8px 2px; border-radius: 8px; font-size: 13px; white-space: nowrap; font-weight: 700;
+      text-decoration: none; background: #1565c0; color: white;
+    }
+    .card-btn.secondary { background: #f0f0f0; color: #111; }
+    .card-btn.disabled { opacity: 0.35; pointer-events: none; }
+    #locate-btn {
+      position: absolute; top: -56px; left: 12px; width: 44px; height: 44px; border-radius: 50%; border: 0; padding: 0;
+      background: rgba(255,255,255,0.96); box-shadow: 0 2px 8px rgba(0,0,0,0.35); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #locate-btn.busy { opacity: 0.6; }
+    #locate-msg {
+      position: absolute; top: -50px; left: 64px; right: 12px; font-size: 13px; font-weight: 600; color: #111;
+      background: rgba(255,255,255,0.96); padding: 6px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: none;
+    }
+    .me-dot { width: 16px; height: 16px; border-radius: 50%; background: #1a73e8; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(21,101,192,0.35), 0 1px 4px rgba(0,0,0,0.4); }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="bottom-panel">
+    <button id="locate-btn" aria-label="Show my location" title="Show my location">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"><path d="M3 11 21 3l-8 18-2-8-8-2z"/></svg>
+    </button>
+    <div id="locate-msg"></div>
+    <div id="panel-handle"><div class="bar"></div></div>
+    <div id="result-count"></div>
+    <div id="card-strip"></div>
+  </div>
+
+  <script>
+    // ---- CONFIG ----
+    mapboxgl.accessToken = "pk.eyJ1IjoicGV0ZXJ0b29uIiwiYSI6ImNtdDduZ3R4aTFxNmkyeXE3cWh0MDRkeWEifQ.syesHqacjBr298HCaXcihQ";
+    const API_ENDPOINT = "/api/stores";
+    const PIN_COLOR = "#1565c0";
+    // Lifts the card panel off the bottom edge so the Wix app's bottom bar doesn't cover it.
+    // Raise this number to slide the cards up more, lower it to move them down.
+    const PANEL_BOTTOM = 80;
+    document.documentElement.style.setProperty("--panel-bottom", PANEL_BOTTOM + "px");
+
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/satellite-streets-v12",
+      center: [-101.85, 33.58], // starting point — adjust to your primary market
+      zoom: 8,
+    });
+
+    let allStores = new Map();
+    const key = (r) => r.sourceSite + "_" + r.id;
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    async function loadStores() {
+      try {
+        const res = await fetch(API_ENDPOINT);
+        const json = await res.json();
+        for (const r of json.stores || []) allStores.set(key(r), r);
+        renderMarkers();
+        fitToStores();
+      } catch (err) {
+        console.error("Failed to fetch stores", err);
+      }
+    }
+
+    // Frame every store in the part of the map NOT covered by the bottom panel
+    let fitted = false;
+    function fitToStores() {
+      if (fitted || allStores.size === 0) return;
+      fitted = true;
+      const b = new mapboxgl.LngLatBounds();
+      allStores.forEach((r) => b.extend([r.lng, r.lat]));
+      map.fitBounds(b, {
+        padding: { top: 60, left: 50, right: 50, bottom: panel.offsetHeight + PANEL_BOTTOM + 50 },
+        maxZoom: 13, duration: 0,
+      });
+    }
+
+    // ---- HOURS ----
+    // Reads text like "Mon-Fri 7am-9pm, Sat 8am-2pm, Sun closed" and works out open/closed now (Central time).
+    const HOURS_TZ = "America/Chicago";
+    const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const DAY_LOOKUP = { mon: 0, monday: 0, tue: 1, tues: 1, tuesday: 1, wed: 2, weds: 2, wednesday: 2,
+      thu: 3, thur: 3, thurs: 3, thursday: 3, fri: 4, friday: 4, sat: 5, saturday: 5, sun: 6, sunday: 6 };
+
+    function parseClock(text, fallbackSfx) {
+      const s = String(text).trim().toLowerCase();
+      if (s === "noon") return { min: 720, sfx: "p", explicit: true };
+      if (s === "midnight") return { min: 0, sfx: "a", explicit: true };
+      const m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm|a|p)?$/);
+      if (!m) return null;
+      let hr = parseInt(m[1], 10);
+      const mi = parseInt(m[2] || "0", 10);
+      const explicit = !!m[3];
+      const sfx = m[3] ? m[3][0] : fallbackSfx;
+      if (sfx === "p" && hr < 12) hr += 12;
+      if (sfx === "a" && hr === 12) hr = 0;
+      return { min: hr * 60 + mi, sfx, explicit, hr12: parseInt(m[1], 10), mi };
+    }
+
+    function parseRange(text) {
+      const m = String(text).trim().match(/^(.+?)\s*(?:-|–|—|\bto\b)\s*(.+)$/i);
+      if (!m) return null;
+      const end = parseClock(m[2], null);
+      if (!end) return null;
+      let start = parseClock(m[1], end.sfx);
+      if (!start) return null;
+      if (!start.explicit && end.sfx && start.min > end.min) {
+        start = parseClock(m[1], end.sfx === "p" ? "a" : "p"); // only if the start would land after the end
+      }
+      let endMin = end.min;
+      if (endMin <= start.min) endMin += 1440; // closes after midnight
+      return [start.min, endMin];
+    }
+
+    function resolveDays(token) {
+      const t = token.toLowerCase().replace(/\s+/g, " ").trim();
+      if (t === "daily" || t === "everyday" || t === "every day") return [0, 1, 2, 3, 4, 5, 6];
+      const parts = t.split(/\s*[-–—]\s*/);
+      if (parts.length === 1) return t in DAY_LOOKUP ? [DAY_LOOKUP[t]] : null;
+      if (parts.length === 2 && parts[0] in DAY_LOOKUP && parts[1] in DAY_LOOKUP) {
+        const out = []; let i = DAY_LOOKUP[parts[0]]; const last = DAY_LOOKUP[parts[1]];
+        for (let n = 0; n < 7; n++) { out.push(i); if (i === last) break; i = (i + 1) % 7; }
+        return out;
+      }
+      return null;
+    }
+
+    function parseHours(text) {
+      if (!text || typeof text !== "string" || !text.trim()) return null;
+      const t = text.trim();
+      const week = [[], [], [], [], [], [], []];
+      if (/^(24\s*(hours|hrs|\/7)|open\s*24|always open)/i.test(t)) { week.forEach((d) => d.push([0, 1440])); week.allDay = true; return week; }
+      let lastDays = null, parsedAny = false;
+      for (const seg of t.split(/[;,\n]+/).map((s) => s.trim()).filter(Boolean)) {
+        let days = null, rest = seg;
+        const m = seg.match(/^([a-z]+(?:\s*[-–—]\s*[a-z]+)?)\s*:?\s*(.*)$/i);
+        if (m && resolveDays(m[1])) { days = resolveDays(m[1]); rest = m[2]; lastDays = days; }
+        else days = lastDays || [0, 1, 2, 3, 4, 5, 6]; // no days written means every day
+        lastDays = days;
+        if (/closed/i.test(rest) && !/\d/.test(rest)) { days.forEach((d) => (week[d] = [])); parsedAny = true; continue; }
+        for (const part of rest.split(/\s*(?:&|\/|\band\b)\s*/i)) {
+          const r = parseRange(part);
+          if (r) { days.forEach((d) => week[d].push(r)); parsedAny = true; }
+        }
+      }
+      return parsedAny ? week : null;
+    }
+
+    function nowCentral(date) {
+      const parts = new Intl.DateTimeFormat("en-US", { timeZone: HOURS_TZ, weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false })
+        .formatToParts(date || new Date());
+      const o = {}; parts.forEach((p) => (o[p.type] = p.value));
+      let hr = parseInt(o.hour, 10); if (hr === 24) hr = 0;
+      return { day: DAY_LABELS.indexOf(o.weekday), min: hr * 60 + parseInt(o.minute, 10) };
+    }
+
+    function fmtTime(total) {
+      const m = total % 1440, hr = Math.floor(m / 60), mi = m % 60;
+      return (hr % 12 || 12) + (mi ? ":" + String(mi).padStart(2, "0") : "") + " " + (hr < 12 ? "AM" : "PM");
+    }
+
+    function hoursStatus(week, date) {
+      if (week.allDay) return { state: "open", pill: "Open", detail: "Open 24 hours" };
+      const { day, min } = nowCentral(date);
+      for (const [s, e] of week[day]) if (min >= s && min < e) return openResult(e - min, e);
+      for (const [s, e] of week[(day + 6) % 7]) if (e > 1440 && min < e - 1440) return openResult(e - 1440 - min, e);
+      for (let d = 0; d <= 7; d++) {
+        const starts = week[(day + d) % 7].map((r) => r[0]).filter((s) => d > 0 || s > min).sort((a, b) => a - b);
+        if (starts.length) {
+          const when = d === 0 ? "" : d === 1 ? "tomorrow " : DAY_LABELS[(day + d) % 7] + " ";
+          return { state: "closed", pill: "Closed", detail: "Opens " + when + fmtTime(starts[0]) };
+        }
+      }
+      return { state: "closed", pill: "Closed", detail: "" };
+    }
+    function openResult(minsLeft, endMin) {
+      return { state: minsLeft <= 60 ? "soon" : "open", pill: minsLeft <= 60 ? "Closing soon" : "Open", detail: "Closes " + fmtTime(endMin) };
+    }
+
+    // Typed text in "status" (e.g. "Pickup Paused") wins; plain "open"/"closed" is ignored when hours exist.
+    function computeStatus(r, date) {
+      const manual = String(r.status || "").trim();
+      if (r._hoursText !== r.hours) { r._week = parseHours(r.hours); r._hoursText = r.hours; }
+      if (manual && (!r._week || !/^(open|closed)$/i.test(manual))) return { state: "manual", pill: manual, detail: "" };
+      if (r._week) return hoursStatus(r._week, date);
+      return { state: "none", pill: "", detail: "" };
+    }
+    // ---- END HOURS ----
+
+    function statusClass(status) {
+      const s = String(status || "").toLowerCase();
+      if (s.includes("paus") || s.includes("busy")) return "status-paused";
+      if (s.includes("closed")) return "status-closed";
+      if (s.includes("open")) return "status-open";
+      return "";
+    }
+
+    function toGeoJSON() {
+      return {
+        type: "FeatureCollection",
+        features: Array.from(allStores.values()).map((r) => ({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [r.lng, r.lat] },
+          properties: { id: key(r), name: r.name || "" },
+        })),
+      };
+    }
+
+    function renderMarkers() {
+      const geojson = toGeoJSON();
+      const src = map.getSource("stores");
+      if (src) { src.setData(geojson); renderCardStrip(); return; }
+
+      map.addSource("stores", { type: "geojson", data: geojson, cluster: true, clusterMaxZoom: 13, clusterRadius: 50 });
+      map.addLayer({ id: "clusters", type: "circle", source: "stores", filter: ["has", "point_count"],
+        paint: { "circle-color": PIN_COLOR, "circle-radius": ["step", ["get", "point_count"], 18, 10, 24, 30, 32], "circle-opacity": 0.85 } });
+      map.addLayer({ id: "cluster-count", type: "symbol", source: "stores", filter: ["has", "point_count"],
+        layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 13 }, paint: { "text-color": "#fff" } });
+      map.addImage("pin", makePinImage(), { pixelRatio: 2 });
+      map.addLayer({ id: "unclustered-point", type: "symbol", source: "stores", filter: ["!", ["has", "point_count"]],
+        layout: {
+          "icon-image": "pin", "icon-anchor": "bottom", "icon-allow-overlap": true,
+          "text-field": ["get", "name"], "text-size": 14, "text-anchor": "top", "text-offset": [0, 0.3],
+          "text-font": ["DIN Pro Bold", "Arial Unicode MS Bold"], "text-max-width": 9, "text-optional": true,
+        },
+        paint: { "text-color": PIN_COLOR, "text-halo-color": "#fff", "text-halo-width": 2 } });
+
+      map.on("click", "unclustered-point", (e) => {
+        const id = e.features[0].properties.id;
+        panel.classList.remove("collapsed");
+        const card = findCard(id);
+        if (card) { card.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" }); highlightCard(id); }
+        map.easeTo({ center: e.features[0].geometry.coordinates, offset: [0, -(panel.offsetHeight + PANEL_BOTTOM) / 2] });
+      });
+      map.on("click", "clusters", (e) => {
+        const clusterId = e.features[0].properties.cluster_id;
+        map.getSource("stores").getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (!err) map.easeTo({ center: e.features[0].geometry.coordinates, zoom, offset: [0, -(panel.offsetHeight + PANEL_BOTTOM) / 2] });
+        });
+      });
+      for (const layer of ["unclustered-point", "clusters"]) {
+        map.on("mouseenter", layer, () => (map.getCanvas().style.cursor = "pointer"));
+        map.on("mouseleave", layer, () => (map.getCanvas().style.cursor = ""));
+      }
+      renderCardStrip();
+    }
+
+    function makePinImage() {
+      const c = document.createElement("canvas"); c.width = 64; c.height = 88;
+      const x = c.getContext("2d");
+      x.beginPath(); x.moveTo(32, 86);
+      x.bezierCurveTo(32, 86, 5, 52, 5, 31); x.arc(32, 31, 27, Math.PI, 0);
+      x.bezierCurveTo(59, 52, 32, 86, 32, 86); x.closePath();
+      x.fillStyle = PIN_COLOR; x.fill(); x.lineWidth = 3; x.strokeStyle = "#0d3c78"; x.stroke();
+      x.beginPath(); x.arc(32, 31, 9, 0, Math.PI * 2); x.fillStyle = "#222"; x.fill();
+      return x.getImageData(0, 0, 64, 88);
+    }
+
+    // Rating gauge: 270-degree ring filled in proportion to rating/5, star in the middle
+    function ratingRing(rating) {
+      const r = 24, circ = 2 * Math.PI * r, track = circ * 0.75, fill = track * Math.max(0, Math.min(5, rating)) / 5;
+      const pts = [];
+      for (let i = 0; i < 10; i++) {
+        const rad = i % 2 === 0 ? 13 : 5.5, ang = -Math.PI / 2 + i * Math.PI / 5;
+        pts.push((32 + rad * Math.cos(ang)).toFixed(1) + "," + (32 + rad * Math.sin(ang)).toFixed(1));
+      }
+      return '<svg class="rating-ring" viewBox="0 0 64 64" aria-label="Rating ' + rating + ' of 5">' +
+        '<g transform="rotate(135 32 32)" fill="none" stroke-width="5" stroke-linecap="round">' +
+        '<circle cx="32" cy="32" r="' + r + '" stroke="#cfcfcf" stroke-dasharray="' + track + " " + circ + '"/>' +
+        '<circle cx="32" cy="32" r="' + r + '" stroke="#f59e0b" stroke-dasharray="' + fill + " " + circ + '"/></g>' +
+        '<polygon points="' + pts.join(" ") + '" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+    }
+
+    function applyStatus(card, r) {
+      const st = computeStatus(r);
+      const pill = card.querySelector(".card-status"), line = card.querySelector(".card-hours");
+      pill.textContent = st.pill;
+      pill.style.display = st.pill ? "" : "none";
+      pill.className = "card-status " + (st.state === "open" ? "status-open" : st.state === "closed" ? "status-closed"
+        : st.state === "soon" ? "status-paused" : statusClass(st.pill));
+      line.textContent = st.detail;
+      line.style.display = st.detail ? "" : "none";
+      line.className = "card-hours " + (st.state === "open" ? "open" : st.state === "closed" ? "closed" : st.state === "soon" ? "soon" : "");
+    }
+    function updateStatuses() {
+      document.querySelectorAll(".store-card").forEach((c) => { const r = allStores.get(c.dataset.id); if (r) applyStatus(c, r); });
+    }
+    setInterval(updateStatuses, 60000);
+
+    function findCard(id) {
+      return Array.from(document.querySelectorAll(".store-card")).find((c) => c.dataset.id === id);
+    }
+
+    function highlightCard(id) {
+      document.querySelectorAll(".store-card").forEach((c) => c.classList.remove("active"));
+      const card = findCard(id);
+      if (card) card.classList.add("active");
+    }
+
+    function button(label, href, secondary, role) {
+      const cls = "card-btn" + (secondary ? " secondary" : "") + (href ? "" : " disabled");
+      return '<a class="' + cls + '"' + (role ? ' data-role="' + role + '"' : "") +
+        (href ? ' data-url="' + esc(href) + '" href="' + esc(href) + '" target="_blank" rel="noopener"' : "") + ">" + label + "</a>";
+    }
+
+    function renderCardStrip() {
+      const bounds = map.getBounds();
+      const visible = Array.from(allStores.values()).filter((r) => bounds.contains([r.lng, r.lat]));
+      document.getElementById("result-count").textContent =
+        visible.length ? visible.length + " store" + (visible.length === 1 ? "" : "s") : "";
+
+      const strip = document.getElementById("card-strip");
+      strip.innerHTML = "";
+      for (const r of visible) {
+        const card = document.createElement("div");
+        card.className = "store-card";
+        card.dataset.id = key(r);
+        const photos = (r.photos || [])
+          .map((p) => '<img src="' + esc(p) + '" alt="' + esc(r.name) + '" loading="lazy" onerror="this.remove()">').join("");
+        const directions = "https://www.google.com/maps/dir/?api=1&destination=" + r.lat + "," + r.lng;
+        card.innerHTML =
+          '<div class="card-photos' + (photos ? "" : " empty") + '">' + photos + "</div>" +
+          '<div class="card-body">' +
+            '<div class="card-top-row">' +
+              '<div class="card-name">' + esc(r.name) + "</div>" +
+              '<div class="card-status" style="display:none"></div>' +
+            "</div>" +
+            '<div class="card-info"><div class="card-text">' +
+              (r.category ? '<div class="card-meta">' + esc(r.category) + "</div>" : "") +
+              '<div class="card-address">' + esc(r.address) + "</div>" +
+              '<div class="card-hours" style="display:none"></div></div>' +
+              (isFinite(r.rating) && r.rating > 0 ? ratingRing(r.rating) : "") +
+            "</div>" +
+            '<div class="card-buttons">' +
+              button("Visit Store", r.storeUrl) +
+              button("Directions", directions, true) +
+              button("Shop / Website", r.websiteUrl) +
+              button("Call", r.phone ? "tel:" + r.phone : null, true) +
+            "</div>" +
+          "</div>";
+        card.addEventListener("mouseenter", () => highlightCard(key(r)));
+        strip.appendChild(card);
+        applyStatus(card, r);
+      }
+    }
+
+    map.on("load", loadStores);
+    map.on("moveend", renderCardStrip); // all stores load once; just refresh the visible cards
+
+    // ---- "Center on my location" button ----
+    const locateBtn = document.getElementById("locate-btn");
+    const locateMsg = document.getElementById("locate-msg");
+    let meMarker = null, msgTimer = null;
+    function showLocateMsg(text) {
+      locateMsg.textContent = text; locateMsg.style.display = "block";
+      clearTimeout(msgTimer); msgTimer = setTimeout(() => (locateMsg.style.display = "none"), 5000);
+    }
+    locateBtn.addEventListener("click", () => {
+      if (!navigator.geolocation) return showLocateMsg("Your browser can't share your location.");
+      locateBtn.classList.add("busy");
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          locateBtn.classList.remove("busy");
+          const c = [pos.coords.longitude, pos.coords.latitude];
+          if (!meMarker) {
+            const el = document.createElement("div"); el.className = "me-dot";
+            meMarker = new mapboxgl.Marker({ element: el }).setLngLat(c).addTo(map);
+          } else meMarker.setLngLat(c);
+          map.flyTo({ center: c, zoom: Math.max(map.getZoom(), 12), offset: [0, -(panel.offsetHeight + PANEL_BOTTOM) / 2] });
+        },
+        (err) => {
+          locateBtn.classList.remove("busy");
+          showLocateMsg(err.code === 1 ? "Location is blocked. Allow it in your browser or phone settings." : "Couldn't find your location. Try again.");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+
+    // ---- Collapsible bottom panel ----
+    const panel = document.getElementById("bottom-panel");
+    const handle = document.getElementById("panel-handle");
+    const setCollapsed = (c) => panel.classList.toggle("collapsed", c);
+    handle.addEventListener("click", () => setCollapsed(!panel.classList.contains("collapsed")));
+    let touchStartY = null;
+    handle.addEventListener("touchstart", (e) => { touchStartY = e.touches[0].clientY; }, { passive: true });
+    handle.addEventListener("touchend", (e) => {
+      if (touchStartY === null) return;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (dy > 25) setCollapsed(true); else if (dy < -25) setCollapsed(false);
+      touchStartY = null;
+    });
+  </script>
+</body>
+</html>

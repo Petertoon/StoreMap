@@ -1,0 +1,48 @@
+[
+  {
+    "siteId": "site1",
+    "siteName": "Lokaalhub",
+    "domain": "https://www.lokaalhub.com",
+    "apiKeyEnv": "WIX_API_KEY_SITE1",
+    "accountIdEnv": "WIX_ACCOUNT_ID_SITE1",
+    "siteIdEnv": "WIX_SITE_ID_SITE1",
+    "collectionId": "Stores",
+    "fields": {
+      "name": "title",
+      "lat": "lat",
+      "lng": "lng",
+      "address": "address",
+      "phone": "phone",
+      "websiteUrl": "website",
+      "storeUrl": "storeUrl",
+      "photos": "image",
+      "status": "status",
+      "category": "category",
+      "rating": "rating",
+      "hours": "hours"
+    }
+  },
+  {
+    "siteId": "site2",
+    "siteName": "Lokaal Home1",
+    "domain": "https://www.lokaalhome1.com",
+    "apiKeyEnv": "WIX_API_KEY_SITE2",
+    "accountIdEnv": "WIX_ACCOUNT_ID_SITE2",
+    "siteIdEnv": "WIX_SITE_ID_SITE2",
+    "collectionId": "Stores",
+    "fields": {
+      "name": "title",
+      "lat": "lat",
+      "lng": "lng",
+      "address": "address",
+      "phone": "phone",
+      "websiteUrl": "website",
+      "storeUrl": "storeUrl",
+      "photos": "image",
+      "status": "status",
+      "category": "category",
+      "rating": "rating",
+      "hours": "hours"
+    }
+  }
+]
