@@ -3,7 +3,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Restaurant Map</title>
+  <title>Store Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
@@ -20,11 +20,11 @@
     #panel-handle .bar { width: 44px; height: 5px; border-radius: 3px; background: #bdbdbd; }
     #result-count { text-align: center; font-weight: 700; font-size: 15px; color: #111; padding-bottom: 6px; min-height: 4px; }
     #card-strip { display: flex; gap: 10px; overflow-x: auto; padding: 0 12px 12px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
-    .rest-card {
+    .store-card {
       flex: 0 0 min(62vw, 270px); scroll-snap-align: start; background: #fff; border-radius: 14px; overflow: hidden;
       box-shadow: 0 1px 8px rgba(0,0,0,0.18); transition: transform 0.15s ease;
     }
-    .rest-card.active { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .store-card.active { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
     .card-photos {
       display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100px; background: #e2e2e2;
       touch-action: pan-x; scrollbar-width: none;
@@ -32,7 +32,7 @@
     .card-photos::-webkit-scrollbar { display: none; }
     .card-photos img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
     .card-photos.empty { align-items: center; justify-content: center; }
-    .card-photos.empty::before { content: "🍽️"; font-size: 34px; opacity: 0.4; }
+    .card-photos.empty::before { content: "🏬"; font-size: 34px; opacity: 0.4; }
     .card-body { padding: 7px 10px 10px; }
     .card-top-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     .card-name { font-size: 15px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -55,7 +55,7 @@
     .card-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
     .card-btn {
       display: block; text-align: center; padding: 8px 2px; border-radius: 8px; font-size: 13px; white-space: nowrap; font-weight: 700;
-      text-decoration: none; background: #d43a0a; color: white;
+      text-decoration: none; background: #1565c0; color: white;
     }
     .card-btn.secondary { background: #f0f0f0; color: #111; }
     .card-btn.disabled { opacity: 0.35; pointer-events: none; }
@@ -69,11 +69,18 @@
       position: absolute; top: -50px; left: 64px; right: 12px; font-size: 13px; font-weight: 600; color: #111;
       background: rgba(255,255,255,0.96); padding: 6px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: none;
     }
-    .me-dot { width: 16px; height: 16px; border-radius: 50%; background: #1a73e8; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(26,115,232,0.35), 0 1px 4px rgba(0,0,0,0.4); }
+    #filter-box {
+      position: absolute; top: 12px; left: 12px; z-index: 5; background: rgba(255,255,255,0.97); border-radius: 12px;
+      padding: 10px 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); font-size: 15px; font-weight: 600; color: #111;
+    }
+    #filter-box label { display: flex; align-items: center; gap: 10px; padding: 5px 0; cursor: pointer; white-space: nowrap; }
+    #filter-box input { width: 20px; height: 20px; accent-color: #1565c0; margin: 0; }
+    .me-dot { width: 16px; height: 16px; border-radius: 50%; background: #1a73e8; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(21,101,192,0.35), 0 1px 4px rgba(0,0,0,0.4); }
   </style>
 </head>
 <body>
   <div id="map"></div>
+  <div id="filter-box" style="display:none"></div>
   <div id="bottom-panel">
     <button id="locate-btn" aria-label="Show my location" title="Show my location">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"><path d="M3 11 21 3l-8 18-2-8-8-2z"/></svg>
@@ -87,11 +94,12 @@
   <script>
     // ---- CONFIG ----
     mapboxgl.accessToken = "pk.eyJ1IjoicGV0ZXJ0b29uIiwiYSI6ImNtdDduZ3R4aTFxNmkyeXE3cWh0MDRkeWEifQ.syesHqacjBr298HCaXcihQ";
-    const API_ENDPOINT = "/api/restaurants";
-    const PIN_COLOR = "#d93025";
+    const API_ENDPOINT = "/api/stores";
+    const PIN_COLOR = "#1565c0";
     // Lifts the card panel off the bottom edge so the Wix app's bottom bar doesn't cover it.
     // Raise this number to slide the cards up more, lower it to move them down.
-    const PANEL_BOTTOM = 60;
+    // You can also test a value without editing code: add ?lift=250 to the web address.
+    const PANEL_BOTTOM = Number(new URLSearchParams(location.search).get("lift")) || 80;
     document.documentElement.style.setProperty("--panel-bottom", PANEL_BOTTOM + "px");
 
     const map = new mapboxgl.Map({
@@ -101,29 +109,61 @@
       zoom: 8,
     });
 
-    let allRestaurants = new Map();
+    let allStores = new Map();
+
+    // ---- CATEGORY FILTER ----
+    // The five groups shown in the checkbox box. Names must match the CMS "category" text (case and & vs "and" don't matter).
+    const CATEGORIES = ["Food & Drink", "Shopping & Gifts", "Home & Hardware", "Auto & Equipment", "Services"];
+    const OTHER = "Other";
+    const norm = (s) => String(s || "").toLowerCase().replace(/\band\b/g, "&").replace(/\s+/g, " ").trim();
+    const catOf = (r) => CATEGORIES.find((c) => norm(c) === norm(r.category)) || OTHER;
+    const activeCats = new Set([...CATEGORIES, OTHER]);
+    const isShown = (r) => activeCats.has(catOf(r));
+
+    function buildFilterBox() {
+      const box = document.getElementById("filter-box");
+      const hasOther = Array.from(allStores.values()).some((r) => catOf(r) === OTHER);
+      const names = hasOther ? [...CATEGORIES, OTHER] : CATEGORIES;
+      box.innerHTML = names.map((c) => '<label><input type="checkbox" checked data-cat="' + esc(c) + '"> ' + esc(c) + "</label>").join("");
+      box.style.display = "";
+      box.addEventListener("change", (e) => {
+        const c = e.target.dataset.cat;
+        if (e.target.checked) activeCats.add(c); else activeCats.delete(c);
+        renderMarkers();
+      });
+    }
     const key = (r) => r.sourceSite + "_" + r.id;
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-    async function loadRestaurants() {
+    // Loads the stores. The free Render server can be asleep for up to a minute, so retry a few times
+    // and show a message on the panel instead of leaving it blank.
+    const setMsg = (t) => { const el = document.getElementById("result-count"); if (el) el.textContent = t; };
+    async function loadStores(attempt = 1) {
+      setMsg(attempt === 1 ? "Loading stores…" : "Waking up the server… (try " + attempt + ")");
       try {
-        const res = await fetch(API_ENDPOINT);
+        const res = await fetch(API_ENDPOINT, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
         const json = await res.json();
-        for (const r of json.restaurants || []) allRestaurants.set(key(r), r);
+        if (!json || !Array.isArray(json.stores)) throw new Error((json && json.error) || "Bad response");
+        for (const r of json.stores) allStores.set(key(r), r);
+        buildFilterBox();
         renderMarkers();
-        fitToRestaurants();
+        fitToStores();
+        if (!allStores.size) setMsg("No stores found yet");
       } catch (err) {
-        console.error("Failed to fetch restaurants", err);
+        console.error("Failed to fetch stores", err);
+        if (attempt < 6) setTimeout(() => loadStores(attempt + 1), 4000);
+        else setMsg("Couldn't load stores. Close and reopen the page.");
       }
     }
 
-    // Frame every restaurant in the part of the map NOT covered by the bottom panel
+    // Frame every store in the part of the map NOT covered by the bottom panel
     let fitted = false;
-    function fitToRestaurants() {
-      if (fitted || allRestaurants.size === 0) return;
+    function fitToStores() {
+      if (fitted || allStores.size === 0) return;
       fitted = true;
       const b = new mapboxgl.LngLatBounds();
-      allRestaurants.forEach((r) => b.extend([r.lng, r.lat]));
+      allStores.forEach((r) => b.extend([r.lng, r.lat]));
       map.fitBounds(b, {
         padding: { top: 60, left: 50, right: 50, bottom: panel.offsetHeight + PANEL_BOTTOM + 50 },
         maxZoom: 13, duration: 0,
@@ -253,7 +293,7 @@
     function toGeoJSON() {
       return {
         type: "FeatureCollection",
-        features: Array.from(allRestaurants.values()).map((r) => ({
+        features: Array.from(allStores.values()).filter(isShown).map((r) => ({
           type: "Feature",
           geometry: { type: "Point", coordinates: [r.lng, r.lat] },
           properties: { id: key(r), name: r.name || "" },
@@ -263,16 +303,16 @@
 
     function renderMarkers() {
       const geojson = toGeoJSON();
-      const src = map.getSource("restaurants");
+      const src = map.getSource("stores");
       if (src) { src.setData(geojson); renderCardStrip(); return; }
 
-      map.addSource("restaurants", { type: "geojson", data: geojson, cluster: true, clusterMaxZoom: 13, clusterRadius: 50 });
-      map.addLayer({ id: "clusters", type: "circle", source: "restaurants", filter: ["has", "point_count"],
+      map.addSource("stores", { type: "geojson", data: geojson, cluster: true, clusterMaxZoom: 13, clusterRadius: 50 });
+      map.addLayer({ id: "clusters", type: "circle", source: "stores", filter: ["has", "point_count"],
         paint: { "circle-color": PIN_COLOR, "circle-radius": ["step", ["get", "point_count"], 18, 10, 24, 30, 32], "circle-opacity": 0.85 } });
-      map.addLayer({ id: "cluster-count", type: "symbol", source: "restaurants", filter: ["has", "point_count"],
+      map.addLayer({ id: "cluster-count", type: "symbol", source: "stores", filter: ["has", "point_count"],
         layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 13 }, paint: { "text-color": "#fff" } });
       map.addImage("pin", makePinImage(), { pixelRatio: 2 });
-      map.addLayer({ id: "unclustered-point", type: "symbol", source: "restaurants", filter: ["!", ["has", "point_count"]],
+      map.addLayer({ id: "unclustered-point", type: "symbol", source: "stores", filter: ["!", ["has", "point_count"]],
         layout: {
           "icon-image": "pin", "icon-anchor": "bottom", "icon-allow-overlap": true,
           "text-field": ["get", "name"], "text-size": 14, "text-anchor": "top", "text-offset": [0, 0.3],
@@ -289,7 +329,7 @@
       });
       map.on("click", "clusters", (e) => {
         const clusterId = e.features[0].properties.cluster_id;
-        map.getSource("restaurants").getClusterExpansionZoom(clusterId, (err, zoom) => {
+        map.getSource("stores").getClusterExpansionZoom(clusterId, (err, zoom) => {
           if (!err) map.easeTo({ center: e.features[0].geometry.coordinates, zoom, offset: [0, -(panel.offsetHeight + PANEL_BOTTOM) / 2] });
         });
       });
@@ -306,7 +346,7 @@
       x.beginPath(); x.moveTo(32, 86);
       x.bezierCurveTo(32, 86, 5, 52, 5, 31); x.arc(32, 31, 27, Math.PI, 0);
       x.bezierCurveTo(59, 52, 32, 86, 32, 86); x.closePath();
-      x.fillStyle = PIN_COLOR; x.fill(); x.lineWidth = 3; x.strokeStyle = "#a52714"; x.stroke();
+      x.fillStyle = PIN_COLOR; x.fill(); x.lineWidth = 3; x.strokeStyle = "#0d3c78"; x.stroke();
       x.beginPath(); x.arc(32, 31, 9, 0, Math.PI * 2); x.fillStyle = "#222"; x.fill();
       return x.getImageData(0, 0, 64, 88);
     }
@@ -333,28 +373,21 @@
       pill.style.display = st.pill ? "" : "none";
       pill.className = "card-status " + (st.state === "open" ? "status-open" : st.state === "closed" ? "status-closed"
         : st.state === "soon" ? "status-paused" : statusClass(st.pill));
-      // Pickup is only available while the restaurant is open (by its hours) and not marked paused/closed
-      const pick = card.querySelector('[data-role="pickup"]');
-      if (pick && pick.dataset.url) {
-        const off = st.state === "closed" || (st.state === "manual" && /paus|closed|unavailable/i.test(st.pill));
-        if (off) { pick.removeAttribute("href"); pick.classList.add("disabled"); }
-        else { pick.setAttribute("href", pick.dataset.url); pick.classList.remove("disabled"); }
-      }
       line.textContent = st.detail;
       line.style.display = st.detail ? "" : "none";
       line.className = "card-hours " + (st.state === "open" ? "open" : st.state === "closed" ? "closed" : st.state === "soon" ? "soon" : "");
     }
     function updateStatuses() {
-      document.querySelectorAll(".rest-card").forEach((c) => { const r = allRestaurants.get(c.dataset.id); if (r) applyStatus(c, r); });
+      document.querySelectorAll(".store-card").forEach((c) => { const r = allStores.get(c.dataset.id); if (r) applyStatus(c, r); });
     }
     setInterval(updateStatuses, 60000);
 
     function findCard(id) {
-      return Array.from(document.querySelectorAll(".rest-card")).find((c) => c.dataset.id === id);
+      return Array.from(document.querySelectorAll(".store-card")).find((c) => c.dataset.id === id);
     }
 
     function highlightCard(id) {
-      document.querySelectorAll(".rest-card").forEach((c) => c.classList.remove("active"));
+      document.querySelectorAll(".store-card").forEach((c) => c.classList.remove("active"));
       const card = findCard(id);
       if (card) card.classList.add("active");
     }
@@ -367,15 +400,15 @@
 
     function renderCardStrip() {
       const bounds = map.getBounds();
-      const visible = Array.from(allRestaurants.values()).filter((r) => bounds.contains([r.lng, r.lat]));
+      const visible = Array.from(allStores.values()).filter((r) => isShown(r) && bounds.contains([r.lng, r.lat]));
       document.getElementById("result-count").textContent =
-        visible.length ? visible.length + " restaurant" + (visible.length === 1 ? "" : "s") : "";
+        visible.length ? visible.length + " store" + (visible.length === 1 ? "" : "s") : "";
 
       const strip = document.getElementById("card-strip");
       strip.innerHTML = "";
       for (const r of visible) {
         const card = document.createElement("div");
-        card.className = "rest-card";
+        card.className = "store-card";
         card.dataset.id = key(r);
         const photos = (r.photos || [])
           .map((p) => '<img src="' + esc(p) + '" alt="' + esc(r.name) + '" loading="lazy" onerror="this.remove()">').join("");
@@ -388,15 +421,15 @@
               '<div class="card-status" style="display:none"></div>' +
             "</div>" +
             '<div class="card-info"><div class="card-text">' +
-              (r.cuisine ? '<div class="card-meta">' + esc(r.cuisine) + "</div>" : "") +
+              (r.category ? '<div class="card-meta">' + esc(r.category) + "</div>" : "") +
               '<div class="card-address">' + esc(r.address) + "</div>" +
               '<div class="card-hours" style="display:none"></div></div>' +
               (isFinite(r.rating) && r.rating > 0 ? ratingRing(r.rating) : "") +
             "</div>" +
             '<div class="card-buttons">' +
-              button("Menu", r.menuUrl) +
+              button("Visit Store", r.storeUrl) +
               button("Directions", directions, true) +
-              button("Pickup Menu", r.pickupMenuUrl, false, "pickup") +
+              button("Shop / Website", r.websiteUrl) +
               button("Call", r.phone ? "tel:" + r.phone : null, true) +
             "</div>" +
           "</div>";
@@ -406,8 +439,8 @@
       }
     }
 
-    map.on("load", loadRestaurants);
-    map.on("moveend", renderCardStrip); // all restaurants load once; just refresh the visible cards
+    map.on("load", () => loadStores());
+    map.on("moveend", renderCardStrip); // all stores load once; just refresh the visible cards
 
     // ---- "Center on my location" button ----
     const locateBtn = document.getElementById("locate-btn");
