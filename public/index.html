@@ -26,11 +26,12 @@
     }
     .store-card.active { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
     .card-photos {
-      display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 64px; background: #e2e2e2;
+      display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 76px; gap: 2px; background: #e2e2e2;
       touch-action: pan-x; scrollbar-width: none;
     }
     .card-photos::-webkit-scrollbar { display: none; }
     .card-photos img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
+    .card-photos.multi img { flex: 0 0 calc(50% - 1px); width: calc(50% - 1px); }
     .card-photos.empty { align-items: center; justify-content: center; }
     .card-photos.empty::before { content: "🏬"; font-size: 34px; opacity: 0.4; }
     .card-body { padding: 5px 9px 8px; }
@@ -414,7 +415,7 @@
           .map((p) => '<img src="' + esc(p) + '" alt="' + esc(r.name) + '" loading="lazy" onerror="this.remove()">').join("");
         const directions = "https://www.google.com/maps/dir/?api=1&destination=" + r.lat + "," + r.lng;
         card.innerHTML =
-          '<div class="card-photos' + (photos ? "" : " empty") + '">' + photos + "</div>" +
+          '<div class="card-photos' + (photos ? "" : " empty") + ((r.photos || []).length > 1 ? " multi" : "") + '">' + photos + "</div>" +
           '<div class="card-body">' +
             '<div class="card-top-row">' +
               '<div class="card-name">' + esc(r.name) + "</div>" +
