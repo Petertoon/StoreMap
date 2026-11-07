@@ -16,24 +16,24 @@
       transition: transform 0.28s ease; padding-bottom: env(safe-area-inset-bottom, 0);
     }
     #bottom-panel.collapsed { transform: translateY(calc(100% - 34px)); }
-    #panel-handle { display: flex; justify-content: center; align-items: center; height: 24px; cursor: pointer; touch-action: none; }
+    #panel-handle { display: flex; justify-content: center; align-items: center; height: 16px; cursor: pointer; touch-action: none; }
     #panel-handle .bar { width: 44px; height: 5px; border-radius: 3px; background: #bdbdbd; }
-    #result-count { text-align: center; font-weight: 700; font-size: 15px; color: #111; padding-bottom: 6px; min-height: 4px; }
+    #result-count { text-align: center; font-weight: 700; font-size: 15px; color: #111; padding-bottom: 3px; min-height: 4px; }
     #card-strip { display: flex; gap: 10px; overflow-x: auto; padding: 0 12px 12px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
     .store-card {
-      flex: 0 0 min(62vw, 270px); scroll-snap-align: start; background: #fff; border-radius: 14px; overflow: hidden;
+      flex: 0 0 min(58vw, 250px); scroll-snap-align: start; background: #fff; border-radius: 14px; overflow: hidden;
       box-shadow: 0 1px 8px rgba(0,0,0,0.18); transition: transform 0.15s ease;
     }
     .store-card.active { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
     .card-photos {
-      display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100px; background: #e2e2e2;
+      display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 64px; background: #e2e2e2;
       touch-action: pan-x; scrollbar-width: none;
     }
     .card-photos::-webkit-scrollbar { display: none; }
     .card-photos img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
     .card-photos.empty { align-items: center; justify-content: center; }
     .card-photos.empty::before { content: "🏬"; font-size: 34px; opacity: 0.4; }
-    .card-body { padding: 7px 10px 10px; }
+    .card-body { padding: 5px 9px 8px; }
     .card-top-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     .card-name { font-size: 15px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-status {
@@ -43,18 +43,18 @@
     .card-status.status-open { background: #d7f0dd; color: #1e6b34; }
     .card-status.status-closed { background: #fbe0e0; color: #9b1c1c; }
     .card-status.status-paused { background: #fbe9cf; color: #93590a; }
-    .card-info { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 46px; }
+    .card-info { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 34px; }
     .card-text { min-width: 0; }
     .card-meta { font-size: 12px; font-weight: 600; color: #777; margin-top: 2px; }
     .card-hours { font-size: 12px; font-weight: 700; margin-top: 2px; color: #777; }
     .card-hours.open { color: #1e6b34; }
     .card-hours.closed { color: #9b1c1c; }
     .card-hours.soon { color: #93590a; }
-    .card-address { font-size: 12px; color: #777; margin-top: 2px; }
-    .rating-ring { flex: 0 0 46px; width: 46px; height: 46px; }
-    .card-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+    .card-address { font-size: 11px; color: #777; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .rating-ring { flex: 0 0 36px; width: 36px; height: 36px; }
+    .card-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 4px; }
     .card-btn {
-      display: block; text-align: center; padding: 8px 2px; border-radius: 8px; font-size: 13px; white-space: nowrap; font-weight: 700;
+      display: block; text-align: center; padding: 6px 2px; border-radius: 8px; font-size: 12px; white-space: nowrap; font-weight: 700;
       text-decoration: none; background: #1565c0; color: white;
     }
     .card-btn.secondary { background: #f0f0f0; color: #111; }
@@ -71,10 +71,10 @@
     }
     #filter-box {
       position: absolute; top: 12px; left: 12px; z-index: 5; background: rgba(255,255,255,0.97); border-radius: 12px;
-      padding: 10px 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); font-size: 15px; font-weight: 600; color: #111;
+      padding: 6px 11px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); font-size: 13px; font-weight: 600; color: #111;
     }
-    #filter-box label { display: flex; align-items: center; gap: 10px; padding: 5px 0; cursor: pointer; white-space: nowrap; }
-    #filter-box input { width: 20px; height: 20px; accent-color: #1565c0; margin: 0; }
+    #filter-box label { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; white-space: nowrap; }
+    #filter-box input { width: 17px; height: 17px; accent-color: #1565c0; margin: 0; }
     .me-dot { width: 16px; height: 16px; border-radius: 50%; background: #1a73e8; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(21,101,192,0.35), 0 1px 4px rgba(0,0,0,0.4); }
   </style>
 </head>
@@ -99,7 +99,7 @@
     // Lifts the card panel off the bottom edge so the Wix app's bottom bar doesn't cover it.
     // Raise this number to slide the cards up more, lower it to move them down.
     // You can also test a value without editing code: add ?lift=250 to the web address.
-    const PANEL_BOTTOM = Number(new URLSearchParams(location.search).get("lift")) || 80;
+    const PANEL_BOTTOM = Number(new URLSearchParams(location.search).get("lift")) || 10;
     document.documentElement.style.setProperty("--panel-bottom", PANEL_BOTTOM + "px");
 
     const map = new mapboxgl.Map({
