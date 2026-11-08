@@ -1,3 +1,4 @@
+
 // routes/stores.js
 const express = require("express");
 const router = express.Router();
@@ -27,6 +28,7 @@ function extractPhotos(value) {
     .map((v) => (typeof v === "string" ? v : v && (v.src || v.url || v.image)))
     .map(wixImageToUrl)
     .filter(Boolean)
+    .filter((u, i, arr) => arr.indexOf(u) === i) // same photo in image and gallery shows once
     .slice(0, 5);
 }
 
@@ -103,7 +105,7 @@ async function fetchSite(site) {
         id: item.id,
         sourceSite: site.siteId,
         siteName: site.siteName,
-        name: d[f.name] || null,
+        name: d[f.name] || d.storeName || d.title || d.title_fld || null,
         lat,
         lng,
         address: d[f.address] || null,
@@ -115,7 +117,7 @@ async function fetchSite(site) {
         // Visit Store: an explicit storeUrl field wins, otherwise the store's dynamic page link
         storeUrl: toUrl(getField(d, f.storeUrl), site.domain) || toUrl(d[linkField], site.domain),
         websiteUrl: toUrl(getField(d, f.websiteUrl, /web.?site|shop/i), site.domain),
-        photos: extractPhotos(d[f.photos]),
+        photos: extractPhotos([].concat(d[f.photos] || [], d.gallery || [])),
       });
     }
     if (items.length < 100) break;
