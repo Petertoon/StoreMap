@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Find a Store</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #113c2a;           /* page background */
+      --maroon: #7e231a;       /* header bars, borders, Menu button */
+      --cream: #fbf0df;        /* dropdowns and rows */
+      --green: #1c5a1f;        /* restaurant names */
+      --line: #cdbfa8;         /* lines between rows */
+      --ink: #2b2b2b;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; background: var(--bg); font-family: "Montserrat", system-ui, -apple-system, sans-serif; color: var(--ink); }
+    body { padding: 12px 12px 28px; }
+    svg { display: block; }
+
+    /* ---- top buttons ---- */
+    .top-row { display: flex; gap: 12px; align-items: stretch; }
+    .top-row > * { flex: 1; min-width: 0; }
+    .select-wrap { position: relative; }
+    .btn-region, .btn-map {
+      display: flex; align-items: center; gap: 8px; width: 100%; height: 100%; min-height: 64px; padding: 8px 10px; border-radius: 22px;
+      font: 800 17px/1.05 "Montserrat", system-ui, sans-serif; text-decoration: none; cursor: pointer; text-align: left;
+    }
+    .btn-region { background: linear-gradient(#fdf4e4, #f1e2c8); color: #7e231a; border: 3px solid #c5532b; box-shadow: 0 0 0 2px #f0d9bd, 0 3px 8px rgba(0,0,0,.4); }
+    .btn-map { background: linear-gradient(#2f8c3a, #1c5e22); color: #fff; border: 3px solid #eadcc2; box-shadow: 0 3px 8px rgba(0,0,0,.4); justify-content: center; }
+    .btn-region .ico, .btn-map .ico { width: 32px; height: 32px; flex: none; }
+    .btn-region .label { flex: 1; }
+    .btn-region .chev, .btn-map .chev { width: 20px; height: 20px; flex: none; }
+    .btn-region[aria-expanded="true"] .chev { transform: rotate(180deg); }
+
+    #hero { display: none; margin: 12px -12px 0; height: 66px; background-size: cover; background-position: center; }
+    #hero.show { display: block; }
+
+    .title { display: flex; align-items: center; gap: 12px; color: #fff; font-size: 26px; font-weight: 800; margin: 14px 2px 12px; justify-content: center; }
+    .title::before, .title::after { content: ""; flex: 1; height: 2px; background: rgba(255,255,255,.65); }
+    .title svg { width: 32px; height: 32px; flex: none; }
+
+    /* ---- dropdowns ---- */
+    #city-btn {
+      width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 18px; background: linear-gradient(#fdf4e4, #f1e2c8);
+      border: 3px solid var(--maroon); box-shadow: 0 0 0 2px #f1dcc0, 0 3px 8px rgba(0,0,0,.35); border-radius: 30px; font: 800 22px "Montserrat", system-ui, sans-serif; color: var(--maroon); cursor: pointer; text-align: left;
+    }
+    #city-btn svg.icon { width: 32px; height: 32px; flex: none; }
+    #city-btn .label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #city-btn .chev { width: 28px; height: 28px; flex: none; transition: transform .15s; }
+    #city-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+    .dd-list {
+      display: none; position: absolute; left: 6px; right: 6px; top: calc(100% + 6px); z-index: 20; margin: 0; padding: 6px; list-style: none;
+      background: var(--cream); border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.5); max-height: 340px; overflow-y: auto;
+    }
+    .dd-list.open { display: block; }
+    .dd-list li { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px; font-size: 18px; font-weight: 700; color: #3a2a26; cursor: pointer; }
+    .dd-list li svg { width: 22px; height: 22px; flex: none; color: var(--maroon); }
+    .dd-list li.sel { background: var(--maroon); color: #fff; }
+    .dd-list li.sel svg { color: #fff; }
+    #region-list { left: 0; right: -40px; }
+
+    #areas { display: none; flex-wrap: wrap; gap: 8px; margin: 12px 2px 0; }
+    #areas.show { display: flex; }
+    #areas button { border: 2px solid var(--cream); background: transparent; color: var(--cream); border-radius: 20px; padding: 7px 14px; font: 700 14px "Montserrat", system-ui, sans-serif; cursor: pointer; }
+    #areas button.sel { background: var(--cream); color: var(--maroon); }
+
+    /* ---- results ---- */
+    .results { margin-top: 16px; background: var(--cream); border: 3px solid var(--cream); border-radius: 22px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.35); }
+    .results-head { display: flex; align-items: center; gap: 12px; background: linear-gradient(#8f2a1f, #741f17); color: #fff; padding: 10px 12px; border-radius: 18px 18px 0 0; }
+    .results-head svg { width: 32px; height: 32px; flex: none; }
+    .results-head h2 { flex: 1; margin: 0; font-size: 19px; font-weight: 800; line-height: 1.15; }
+    .count { flex: none; background: #fff; color: #222; border-radius: 18px; padding: 6px 12px; font-size: 14px; font-weight: 700; }
+
+    .rest { border-top: 1px solid var(--line); }
+    .rest:first-child { border-top: 0; }
+    .rest.open { border: 3px solid #2e7d32; border-radius: 18px; margin: 6px 5px; background: #fff7e8; }
+    .rest-head { display: flex; align-items: center; gap: 14px; padding: 8px 12px; cursor: pointer; }
+    .rest.open .rest-head { padding-bottom: 6px; }
+    .thumb { flex: none; width: 88px; height: 58px; border-radius: 11px; overflow: hidden; background: #d8cdb9; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .info { flex: 1; min-width: 0; }
+    .name { font-size: 17px; font-weight: 800; color: var(--green); line-height: 1.12; letter-spacing: -.2px; }
+    .where { display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 15px; font-weight: 500; color: #2b2b2b; }
+    .where svg { width: 16px; height: 16px; flex: none; color: var(--green); }
+    .rest-head .chev { width: 28px; height: 28px; flex: none; color: var(--green); }
+
+    .acts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px 8px 10px; }
+    .act {
+      display: flex; align-items: center; justify-content: center; gap: 4px; padding: 10px 3px; border-radius: 12px; text-decoration: none; color: #fff;
+      font: 800 12px/1.1 "Montserrat", system-ui, sans-serif; text-align: left; min-height: 46px; box-shadow: 0 2px 4px rgba(0,0,0,.25);
+    }
+    .act svg { width: 19px; height: 19px; flex: none; }
+    .act.info { background: linear-gradient(#9a2d20, #741f17); }
+    .act.call { background: linear-gradient(#2f8c3a, #1c5e22); }
+    .act.dir { background: linear-gradient(#c8741f, #a35a14); }
+    .act.off { opacity: .38; box-shadow: none; filter: grayscale(.4); cursor: default; }
+    @media (min-width: 460px) { .act { font-size: 14px; gap: 8px; } .act svg { width: 24px; height: 24px; } }
+
+    .brand { display: flex; align-items: center; gap: 12px; margin: -12px -12px 0; padding: 14px 16px; min-height: 96px; color: #fbf0df; background: #0e2f20 center/cover no-repeat; }
+    .brand svg { width: 64px; height: 64px; flex: none; color: #fbf0df; }
+    .brand b { display: block; font-size: 38px; font-weight: 800; line-height: 1; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
+    .brand i { display: block; font-size: 14px; font-weight: 600; margin-top: 4px; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
+    .top-row { margin-top: 12px; }
+    .btn-region, .btn-map, #city-btn.small { font-size: 15px; }
+    .btn-map small { display: block; font-size: 11px; font-weight: 600; }
+    .group-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .group { display: flex; align-items: center; gap: 8px; padding: 14px 10px; border-radius: 22px; background: linear-gradient(#fdf4e4,#ecd9b8); border: 3px solid #eadcc2; box-shadow: 0 3px 8px rgba(0,0,0,.4); color: #1d1d1d; font: 800 20px/1.05 "Montserrat", system-ui, sans-serif; cursor: pointer; text-align: left; }
+    .group svg.g { width: 34px; height: 34px; flex: none; color: #7e231a; }
+    .group span { flex: 1; }
+    .group svg.chev { width: 22px; height: 22px; flex: none; }
+    .group.on { background: linear-gradient(#2f8c3a,#1c5e22); color: #fff; border-color: #fbf0df; }
+    .group.on svg.g { color: #fff; }
+    #city-btn { padding: 8px 10px; gap: 8px; font-size: 17px; border-radius: 22px; border: 3px solid #c5532b; box-shadow: 0 0 0 2px #f0d9bd, 0 3px 8px rgba(0,0,0,.4); color: #7e231a; min-height: 64px; }
+    #city-btn .ico { width: 32px; height: 32px; }
+    #city-btn .chev { width: 20px; height: 20px; }
+    .top-row { flex-wrap: wrap; }
+    
+    /* closer to the mock: three buttons in one row, photo header and photo buttons */
+    .top-row { flex-wrap: nowrap; gap: 8px; }
+    .top-row > .select-wrap { flex: 1; min-width: 0; }
+    .top-row > .btn-map { flex: 1.15 1 0; min-height: 0; }
+    .btn-region, #city-btn { font-size: 14px; gap: 5px; padding: 6px 7px; min-height: 58px; border-radius: 18px; }
+    .btn-region .ico, #city-btn .ico, .btn-map .ico { width: 26px; height: 26px; }
+    .btn-region .chev, #city-btn .chev, .btn-map .chev { width: 16px; height: 16px; }
+    .btn-map { font-size: 15px; gap: 5px; padding: 6px 7px; border-radius: 18px; min-height: 58px; }
+    .btn-map small { font-size: 10px; }
+    #region-list { right: 0; }
+    .brand { background-image: linear-gradient(90deg, #0e2f20 0%, #0e2f20 38%, rgba(14,47,32,.2) 75%, rgba(14,47,32,0) 100%), url("bg-brand.jpg"); background-size: cover; background-position: right center; min-height: 100px; }
+    .brand::after { content: ""; }
+    .group { position: relative; overflow: hidden; min-height: 76px; border-radius: 20px; }
+    .group span { position: relative; z-index: 1; font-size: 21px; }
+    .group svg { position: relative; z-index: 1; }
+    #g-home { background: linear-gradient(90deg, rgba(251,240,223,.15), #f3e6cf 70%), url("bg-home.jpg") left center/cover; }
+    #g-biz { background: linear-gradient(90deg, rgba(251,240,223,.15), #f3e6cf 70%), url("bg-biz.jpg") left center/cover; }
+    .group.on { color: #fff; }
+    #g-home.on, #g-biz.on { background: linear-gradient(90deg, rgba(28,94,34,.55), #1c5e22 70%), url("bg-home.jpg") left center/cover; }
+    #g-biz.on { background: linear-gradient(90deg, rgba(28,94,34,.55), #1c5e22 70%), url("bg-biz.jpg") left center/cover; }
+    .thumb { width: 104px; height: 66px; }
+    .name { font-size: 18px; }
+    .top-row { gap: 6px; }
+    .top-row > .btn-map { flex: 1 1 0; }
+    .btn-region, #city-btn { font-size: 13px; gap: 3px; padding: 5px 5px; }
+    .btn-region .ico, #city-btn .ico, .btn-map .ico { width: 22px; height: 22px; }
+    .btn-region .chev, #city-btn .chev, .btn-map .chev { width: 14px; height: 14px; }
+    .btn-region .label, #city-btn .label { min-width: 0; }
+    .btn-map { font-size: 13px; gap: 3px; padding: 5px 5px; }
+    .btn-map small { font-size: 9px; }
+    .group { padding: 10px 8px; gap: 6px; }
+    .group span { font-size: 18px; }
+    .group svg.g { width: 30px; height: 30px; }
+    .thumb { width: 88px; height: 58px; }
+    .name { font-size: 17px; }
+    .msg { padding: 22px 16px; text-align: center; font-size: 16px; font-weight: 600; color: #3a2a26; }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute">
+    <symbol id="i-mapin" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M24 4a8 8 0 0 0-8 8c0 6.5 8 15 8 15s8-8.500 8-15a8 8 0 0 0-8-8z"/><circle cx="24" cy="12" r="2.8"/>
+      <path d="M13 25 5 30v13l9-4 10 4 10-4 9 4V30l-8-5"/><path d="M14 39V30M34 39V30"/>
+    </symbol>
+    <symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M3 21V9l5-3v15M8 21V3l8 3v15M16 21V11l5 2v8M2 21h20M11 9v.01M11 13v.01M11 17v.01M5.5 12v.01M5.5 16v.01M18.5 16v.01"/>
+    </symbol>
+    <symbol id="i-store" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><path d="M6 18 9 7h30l3 11c0 3-2.500 5-5.500 5S30 21 30 18c0 3-2.500 5-6 5s-6-2-6-5c0 3-2.500 5-6.500 5S6 21 6 18z"/><path d="M9 23v18h30V23M20 41V30h8v11"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-8 9 8M5 10v11h14V10M10 21v-6h4v6"/></symbol>
+    <symbol id="i-hat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h18M5 17a7 7 0 0 1 14 0M12 6v5M9 10V7.500M15 10V7.500M2 20h20"/></symbol>
+    <symbol id="i-nav" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3 3 10.500l7 2.500 2.500 7z"/></symbol>
+    <symbol id="i-fork" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 3v7a2 2 0 0 0 2 2v9M9 3v7a2 2 0 0 1-2 2M7 3v6M17 21V3c-2.200 1.500-3 4.500-3 8h3"/>
+    </symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.500A2.500 2.500 0 1 1 12 6.500a2.500 2.500 0 0 1 0 5z"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9 7 7 7-7"/></symbol>
+    <symbol id="i-chev-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 15 7-7 7 7"/></symbol>
+    <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.500 5 5L19.500 7"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="3" width="14" height="18" rx="2"/><path d="M3 7h3M3 12h3M3 17h3M9 8h6M9 12h6M9 16h4"/>
+    </symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24" fill="currentColor"><path d="M6.600 10.800a15.100 15.100 0 0 0 6.600 6.600l2.200-2.200a1 1 0 0 1 1-.25 11.400 11.400 0 0 0 3.600.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.500a1 1 0 0 1 1 1c0 1.250.2 2.450.57 3.600a1 1 0 0 1-.25 1z"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>
+    </symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 5h7v10H9z M16 9h3l3 3v3h-6"/><circle cx="8" cy="17" r="2"/><circle cx="18" cy="17" r="2"/><path d="M2 8h4M3 11h3M4 14h2"/>
+    </symbol>
+  </svg>
+
+  <div class="brand" id="brand"><svg><use href="#i-store"/></svg><div><b>Stores</b><i>Business &amp; Home Goods</i></div></div>
+
+  <div class="top-row" id="top-row">
+    <div class="select-wrap" id="region-wrap" style="display:none">
+      <button class="btn-region" id="region-btn" aria-haspopup="listbox" aria-expanded="false">
+        <svg class="ico"><use href="#i-mapin"/></svg><span class="label" id="region-label">Select Region</span><svg class="chev"><use href="#i-chev-down"/></svg>
+      </button>
+      <ul class="dd-list" id="region-list" role="listbox"></ul>
+    </div>
+    <div class="select-wrap">
+      <button class="btn-region" id="city-btn" aria-haspopup="listbox" aria-expanded="false">
+        <svg class="ico"><use href="#i-building"/></svg><span class="label" id="city-label">Select City</span><svg class="chev"><use href="#i-chev-down"/></svg>
+      </button>
+      <ul class="dd-list" id="city-list" role="listbox"></ul>
+    </div>
+    <a class="btn-map" id="map-btn" target="_top" style="display:none"><svg class="ico"><use href="#i-mapin"/></svg><span>Open Map<small>(Store Directions)</small></span><svg class="chev"><use href="#i-chev-right"/></svg></a>
+  </div>
+
+  <div class="group-row">
+    <button class="group" id="g-home"><svg class="g"><use href="#i-home"/></svg><span>Home Items</span><svg class="chev"><use href="#i-chev-right"/></svg></button>
+    <button class="group" id="g-biz"><svg class="g"><use href="#i-hat"/></svg><span>Business Items</span><svg class="chev"><use href="#i-chev-right"/></svg></button>
+  </div>
+
+  <div id="areas"></div>
+
+  <div class="results">
+    <div class="results-head">
+      <svg><use href="#i-store"/></svg>
+      <h2 id="results-title">Stores</h2>
+      <span class="count" id="results-count"></span>
+    </div>
+    <div id="rows"><div class="msg">Loading stores…</div></div>
+  </div>
+
+  <script>
+    // ---- SETTINGS ----
+    // Full address on purpose: it works wherever Wix shows this page (embedded site, WebView or preview).
+    const API_ENDPOINT = "https://storemap-2g9i.onrender.com/api/stores";
+    const DEFAULT_STATE = "TX"; // shown after the city (e.g. "Midland, TX") unless the address already has a state
+    const TOP = {
+      mapUrl: "https://storemap-2g9i.onrender.com/",           // the "Open Map" button ("" hides it)
+      heroImage: "https://storemap-2g9i.onrender.com/stores-banner.jpg", // optional header picture (upload to the public folder)
+    };
+
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+    const cleanCity = (c) => String(c || "").replace(/[,\s]+(tx|texas)\.?$/i, "").trim();
+    const icon = (id, cls) => '<svg' + (cls ? ' class="' + cls + '"' : "") + '><use href="#' + id + '"/></svg>';
+    const $ = (id) => document.getElementById(id);
+
+    // "Home Items" / "Business Items" buttons filter by these categories (edit to taste)
+    const GROUPS = {
+      home: ["Home & Hardware", "Shopping & Gifts", "Food & Drink"],
+      biz: ["Auto & Equipment", "Services"],
+    };
+    let group = "";
+    let all = [];               // every restaurant
+    let banners = [];           // [{ city, image }]
+    let region = "", city = "", area = "", openId = null;
+    let regionLabels = new Map(), cityLabels = new Map();
+
+    // Open Map button
+    if (TOP.mapUrl) { const m = $("map-btn"); m.href = TOP.mapUrl; m.style.display = "flex"; }
+
+    const stateOf = (r) => {
+      const m = String(r.address || "").match(/\b([A-Za-z]{2})\b\s*\d{5}(?:-\d{4})?\s*$/) || String(r.address || "").match(/,\s*([A-Za-z]{2})\s*$/);
+      return m ? m[1].toUpperCase() : DEFAULT_STATE;
+    };
+    const catNorm = (c) => norm(c).replace(/\band\b/g, "&");
+    const inGroup = (r) => !group || GROUPS[group].some((c) => catNorm(c) === catNorm(r.category));
+    const inRegion = (r) => !region || norm(r.region) === region;
+
+    // ---- dropdown helpers ----
+    function closeLists() {
+      document.querySelectorAll(".dd-list").forEach((l) => l.classList.remove("open"));
+      ["city-btn", "region-btn"].forEach((id) => $(id).setAttribute("aria-expanded", "false"));
+    }
+    function toggleList(btnId, listId) {
+      const list = $(listId), willOpen = !list.classList.contains("open");
+      closeLists();
+      list.classList.toggle("open", willOpen);
+      $(btnId).setAttribute("aria-expanded", willOpen);
+    }
+    const listHtml = (items, selKey) => items.map((it) =>
+      '<li role="option" data-key="' + esc(it.key) + '"' + (it.key === selKey ? ' class="sel"' : "") + ">" +
+      (it.key === selKey ? icon("i-check") : icon(it.icon || "i-building")) + "<span>" + esc(it.text) + "</span></li>").join("");
+
+    function buildRegionList() {
+      regionLabels = new Map();
+      for (const r of all) if (r.region && !regionLabels.has(norm(r.region))) regionLabels.set(norm(r.region), r.region);
+      $("region-wrap").style.display = regionLabels.size ? "block" : "none";
+      const items = [{ key: "", text: "All Regions", icon: "i-mapin" }].concat([...regionLabels.entries()].sort((a, b) => a[1].localeCompare(b[1])).map(([k, t]) => ({ key: k, text: t, icon: "i-mapin" })));
+      $("region-list").innerHTML = listHtml(items, region);
+    }
+    function buildCityList() {
+      cityLabels = new Map();
+      for (const r of all.filter(inRegion)) if (r.city && !cityLabels.has(norm(r.city))) cityLabels.set(norm(r.city), r.city);
+      const items = [{ key: "", text: "All Cities" }].concat([...cityLabels.entries()].sort((a, b) => a[1].localeCompare(b[1])).map(([k, t]) => ({ key: k, text: t })));
+      $("city-list").innerHTML = listHtml(items, city);
+    }
+    function buildAreas() {
+      const box = $("areas");
+      const areas = new Map();
+      if (city) for (const r of all.filter(inRegion)) if (norm(r.city) === city && r.area) areas.set(norm(r.area), r.area);
+      if (!areas.size) { box.className = ""; box.innerHTML = ""; return; }
+      const chips = [{ key: "", text: "All of " + cityLabels.get(city) }].concat([...areas.entries()].sort((a, b) => a[1].localeCompare(b[1])).map(([k, t]) => ({ key: k, text: t })));
+      box.innerHTML = chips.map((c) => '<button data-key="' + esc(c.key) + '"' + (c.key === area ? ' class="sel"' : "") + ">" + esc(c.text) + "</button>").join("");
+      box.className = "show";
+    }
+
+    // ---- restaurant rows ----
+    function actionsHtml(r) {
+      const btn = (cls, ic, label, href, ext) => href
+        ? '<a class="act ' + cls + '" href="' + esc(href) + '"' + (href.indexOf("tel:") === 0 ? "" : ' target="_top"') + ">" + icon(ic) + "<span>" + label + "</span></a>"
+        : '<span class="act ' + cls + ' off">' + icon(ic) + "<span>" + label + "</span></span>";
+      const dir = isFinite(r.lat) && isFinite(r.lng) ? "https://www.google.com/maps/dir/?api=1&destination=" + r.lat + "," + r.lng : "";
+      return '<div class="acts">' +
+        btn("info", "i-store", "Store Info", r.storeUrl || r.websiteUrl) +
+        btn("call", "i-phone", "Call", r.phone ? "tel:" + r.phone : "") +
+        btn("dir", "i-nav", "Directions", dir) + "</div>";
+    }
+    function rowHtml(r) {
+      const open = String(r.id) === openId;
+      const photo = (r.photos || [])[0];
+      const thumb = '<div class="thumb">' + (photo ? '<img src="' + esc(photo) + '" alt="" loading="lazy" onerror="this.remove()">' : "🏬") + "</div>";
+      const place = r.city ? esc(cityLabels.get(norm(r.city)) || r.city) + ", " + esc(stateOf(r)) : esc(r.address || "");
+      return '<div class="rest' + (open ? " open" : "") + '">' +
+        '<div class="rest-head" data-id="' + esc(r.id) + '">' + thumb +
+        '<div class="info"><div class="name">' + esc(r.name) + "</div>" + (place ? '<div class="where">' + icon("i-pin") + "<span>" + place + "</span></div>" : "") + "</div>" +
+        icon(open ? "i-chev-up" : "i-chev-right", "chev") + "</div>" + (open ? actionsHtml(r) : "") + "</div>";
+    }
+    function render() {
+      const shown = all.filter((r) => inRegion(r) && inGroup(r) && (!city || norm(r.city) === city) && (!area || norm(r.area) === area))
+        .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+      const where = !city ? "All Stores" : "Stores in " + cityLabels.get(city) + (area ? " · " + (all.find((r) => norm(r.area) === area) || {}).area : "");
+      $("results-title").textContent = where;
+      $("results-count").textContent = shown.length + (shown.length === 1 ? " Store" : " Stores");
+      $("rows").innerHTML = shown.length ? shown.map(rowHtml).join("") : '<div class="msg">No stores found here yet.</div>';
+    }
+    function refreshAll() { buildRegionList(); buildCityList(); buildAreas(); render(); }
+
+    // ---- events ----
+    $("city-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleList("city-btn", "city-list"); });
+    $("region-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleList("region-btn", "region-list"); });
+    $("city-list").addEventListener("click", (e) => {
+      const li = e.target.closest("li"); if (!li) return;
+      city = li.dataset.key; area = ""; openId = null; closeLists();
+      refreshAll();
+    });
+    $("region-list").addEventListener("click", (e) => {
+      const li = e.target.closest("li"); if (!li) return;
+      region = li.dataset.key; city = ""; area = ""; openId = null; closeLists();
+      $("region-label").textContent = region ? regionLabels.get(region) : "Select Region";
+      $("city-label").textContent = "Select City";
+      refreshAll();
+    });
+    $("areas").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; area = b.dataset.key; openId = null; buildAreas(); render(); });
+    $("rows").addEventListener("click", (e) => {
+      const head = e.target.closest(".rest-head"); if (!head) return;
+      openId = openId === head.dataset.id ? null : head.dataset.id; render();
+    });
+    ["home", "biz"].forEach((g) => $("g-" + g).addEventListener("click", () => {
+      group = group === g ? "" : g; openId = null;
+      $("g-home").classList.toggle("on", group === "home"); $("g-biz").classList.toggle("on", group === "biz");
+      render();
+    }));
+    document.addEventListener("click", closeLists);
+    // optional header picture behind the "Stores" title
+
+
+    // The free Render server can be asleep for up to a minute, so retry a few times.
+    async function load(attempt = 1) {
+      $("rows").innerHTML = '<div class="msg">' + (attempt === 1 ? "Loading stores…" : "Waking up the server… (try " + attempt + ")") + "</div>";
+      try {
+        const res = await fetch(API_ENDPOINT, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const json = await res.json();
+        if (!json || !Array.isArray(json.stores)) throw new Error("Bad response");
+        // "Seminole Tx" or "Seminole, TX" in the CMS is shown as just "Seminole"
+        all = json.stores.map((r) => ({ ...r, city: r.city ? cleanCity(r.city) : r.city }));
+        banners = [];
+        refreshAll();
+      } catch (err) {
+        console.error(err);
+        if (attempt < 12) setTimeout(() => load(attempt + 1), 5000);
+        else $("rows").innerHTML = '<div class="msg">Couldn\'t load stores. Please reload the page.<br><small style="font-weight:500;opacity:.7">(' + esc(err && err.message) + ")</small></div>";
+      }
+    }
+    load();
+  </script>
+</body>
+</html>
