@@ -59,6 +59,19 @@ function cleanText(v) {
 }
 
 // City: the "city" column if filled in, otherwise guessed from an address like "123 Main St, Midland, TX 79701".
+// Wix "Address" fields arrive as an object (formatted, city, subdivision, ...) - turn into plain text.
+function addressText(v) {
+  if (!v) return null;
+  if (typeof v === "string") return cleanText(v);
+  if (typeof v === "object") {
+    if (v.formatted || v.formattedAddress) return cleanText(v.formatted || v.formattedAddress);
+    const st = v.streetAddress || {};
+    const street = [st.number, st.name].filter(Boolean).join(" ") || v.addressLine || v.addressLine1;
+    const line = [street, v.city, [v.subdivision, v.postalCode].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    return cleanText(line);
+  }
+  return null;
+}
 function cityFromAddress(addr) {
   if (!addr || typeof addr !== "string") return null;
   const parts = addr.split(",").map((x) => x.trim()).filter(Boolean);
@@ -122,9 +135,9 @@ async function fetchSite(site) {
         name: d[f.name] || d.storeName || d.title || d.title_fld || null,
         lat,
         lng,
-        address: d[f.address] || null,
+        address: addressText(d[f.address]),
         category: d[f.category] || null,
-        city: cleanText(getField(d, f.city || "city")) || cityFromAddress(d[f.address]),
+        city: cleanText(getField(d, f.city || "city")) || (d[f.address] && typeof d[f.address] === "object" && cleanText(d[f.address].city)) || cityFromAddress(addressText(d[f.address])),
         region: cleanText(getField(d, f.region || "region")) || site.region || null,
         rating: parseFloat(d[f.rating]) || null,
         hours: getField(d, f.hours, /hours/i),
