@@ -20,7 +20,8 @@
       "category": "category",
       "rating": "rating",
       "hours": "hours"
-    }
+    },
+    "region": "432 Midland Region"
   },
   {
     "siteId": "site2",
@@ -43,6 +44,7 @@
       "category": "category",
       "rating": "rating",
       "hours": "hours"
-    }
+    },
+    "region": "432 Midland Region"
   }
 ]
