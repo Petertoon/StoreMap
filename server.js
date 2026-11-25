@@ -7,7 +7,7 @@ const debugCollectionsRouter = require("./routes/debug-collections"); // TEMPORA
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), { extensions: ["html"] })); // /stores serves stores.html
 app.use("/api/stores", storesRouter);
 app.use("/api/debug-collections", debugCollectionsRouter); // TEMPORARY
 
