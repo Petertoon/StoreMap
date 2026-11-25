@@ -80,6 +80,12 @@ function cityFromAddress(addr) {
   return null;
 }
 
+// Tags field (list) or plain text "Hardware, Tools" -> ["Hardware", "Tools"]
+function toTags(v) {
+  const list = Array.isArray(v) ? v : typeof v === "string" ? v.split(",") : [];
+  return list.map((t) => cleanText(t)).filter(Boolean).slice(0, 4);
+}
+
 function cleanPhone(value) {
   if (!value || typeof value !== "string") return null;
   const cleaned = value.replace(/[^0-9+]/g, "");
@@ -146,6 +152,7 @@ async function fetchSite(site) {
         // Visit Store: an explicit storeUrl field wins, otherwise the store's dynamic page link
         storeUrl: toUrl(getField(d, f.storeUrl), site.domain) || toUrl(d[linkField], site.domain),
         websiteUrl: toUrl(getField(d, f.websiteUrl, /web.?site|shop/i), site.domain),
+        tags: toTags(getField(d, f.tags || "tags")),
         photos: extractPhotos([].concat(d[f.photos] || [], d.gallery || [])),
       });
     }
