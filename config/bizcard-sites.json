@@ -7,6 +7,10 @@
     "icon": "home",
     "domain": "https://www.lokaalhome1.com",
     "collectionName": "Home Biz Cards",
+    "adsCollectionName": "Biz Card Ads",
+    "advertiseText": "Advertise With Us",
+    "advertiseLink": "",
+    "listingsCollectionName": "Biz Listings",
     "fields": {}
   },
   {
@@ -17,6 +21,10 @@
     "icon": "briefcase",
     "domain": "https://www.lokaalhub.com",
     "collectionName": "Hub biz cards",
+    "adsCollectionName": "Biz Card Ads",
+    "advertiseText": "Advertise With Us",
+    "advertiseLink": "",
+    "listingsCollectionName": "Biz Listings",
     "fields": {}
   }
 ]
