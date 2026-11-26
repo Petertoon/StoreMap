@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Equipment for Sale or Rent — Lokaal</title>
+<style>
+  :root{--green:#173f1e;--maroon:#7a2318;--maroon2:#8f2d1f;--cream:#f7efdf;--cream2:#efe3c8;--tan:#d9b98a;--ink:#1d1a17;--muted:#6b6258;
+        --rv:#2f4a3a;--rv2:#3d5e49}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);
+       background:radial-gradient(120% 60% at 20% 0%,#2a6a33 0%,var(--green) 55%,#10301a 100%);min-height:100vh;overflow-x:hidden;touch-action:pan-y}
+  .banner{display:flex;align-items:center;gap:12px;margin:12px 12px 0;padding:12px 14px;border-radius:18px;border:3px solid var(--cream2);
+          background:linear-gradient(var(--maroon2),var(--maroon));color:#fff;box-shadow:0 3px 10px #0006;max-width:616px}
+  @media(min-width:641px){.banner{margin:12px auto 0}}
+  .banner h1{margin:0;font-size:22px;line-height:1.1}.banner small{display:block;font-size:13px;opacity:.9;margin-top:3px}
+  .wrap{padding:12px 12px 28px;max-width:640px;margin:0 auto}
+  button{font:inherit;cursor:pointer}
+  img{display:block;-webkit-user-drag:none}
+  .hide{display:none!important}
+
+  .area{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .pick{position:relative;display:flex;align-items:center;gap:8px;background:var(--cream);border:3px solid var(--maroon);border-radius:16px;padding:8px 10px;box-shadow:0 2px 6px #0004;min-width:0}
+  .pick svg{flex:0 0 auto;color:var(--maroon)}
+  .pick .t{min-width:0;flex:1}
+  .pick small{display:block;color:var(--maroon);font-size:12px}
+  .pick b{display:block;color:var(--maroon);font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pick select{position:absolute;inset:0;opacity:0;width:100%;height:100%;font-size:16px}
+
+  /* featured / ad window */
+  .ad{position:relative;margin-top:12px;border-radius:20px;overflow:hidden;background:var(--cream);border:4px solid var(--cream2);box-shadow:0 3px 10px #0006;aspect-ratio:12/6.5;width:100%;padding:0;display:block;text-align:left}
+  .ad img{width:100%;height:100%;object-fit:cover}
+  .ad .ribbon{position:absolute;top:10px;left:0;background:linear-gradient(var(--maroon2),var(--maroon));color:#fff;font-weight:800;font-size:15px;padding:7px 22px 7px 14px;clip-path:polygon(0 0,100% 0,92% 100%,0 100%)}
+  .ad .tag{position:absolute;top:10px;right:10px;background:#000a;color:#fff;font-size:11px;font-weight:800;padding:4px 8px;border-radius:6px;letter-spacing:.5px}
+  .ad .over{position:absolute;left:0;bottom:0;max-width:62%;padding:12px 14px 14px;background:linear-gradient(90deg,var(--cream) 70%,transparent);border-top-right-radius:14px}
+  .ad .over b{display:block;font-size:20px;line-height:1.1;color:#203a24}
+  .ad .over .c{display:flex;align-items:center;gap:4px;margin-top:4px;font-size:14px}
+  .ad .over .p{display:inline-block;margin-top:6px;background:var(--maroon);color:#fff;font-weight:800;font-size:18px;padding:4px 14px;border-radius:10px}
+  .ad.empty{display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;background:linear-gradient(135deg,var(--cream),var(--cream2));aspect-ratio:12/4.5;text-decoration:none}
+  .ad.empty b{color:var(--maroon);font-size:18px}.ad.empty span{display:block;color:var(--muted);font-size:13px;margin-top:6px}
+  .dots{position:absolute;bottom:8px;right:12px;display:flex;gap:5px}.dots i{width:6px;height:6px;border-radius:50%;background:#fff8}.dots i.on{background:#fff}
+
+  /* section tiles */
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .tile{display:flex;align-items:center;gap:10px;background:var(--cream);border:4px solid var(--cream2);border-radius:18px;padding:12px 10px;box-shadow:0 2px 6px #0005;text-align:left;min-height:84px}
+  .tile b{font-size:18px;line-height:1.1;color:var(--maroon)}
+  .tile svg{flex:0 0 52px;color:var(--maroon)}
+  .tile.sale{background:linear-gradient(#2f7a3b,#1f5a2a)}.tile.sale b,.tile.sale svg{color:#fff}
+  .tile.on{border-color:#fff;box-shadow:0 0 0 3px var(--maroon),0 2px 8px #0007}
+
+  /* listing box */
+  .box{margin-top:14px;background:var(--cream);border-radius:20px;overflow:hidden;border:3px solid var(--cream2);box-shadow:0 3px 10px #0005}
+  .box h2{margin:0;display:flex;align-items:center;gap:12px;background:linear-gradient(var(--maroon2),var(--maroon));color:#fff;font-size:21px;padding:12px 16px}
+  .box.rec h2{background:linear-gradient(var(--rv2),var(--rv))}
+  .box .x2{margin-left:auto;background:#fff3;border:0;color:#fff;border-radius:50%;width:30px;height:30px;font-size:18px}
+  .filters{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;padding:12px 14px 14px}
+  .f label{display:block;font-weight:800;font-size:14px;margin-bottom:6px}
+  .f.wide{grid-column:1/-1}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{background:transparent;border:2px solid #9b8c76;color:var(--ink);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px}
+  .chip.on{background:#1f4a2a;border-color:#1f4a2a;color:#fff}
+  .box.rec .chip.on{background:var(--rv);border-color:var(--rv)}
+  .typetiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+  .tt{background:#fff;border:2px solid #d8ccb4;border-radius:12px;padding:0 0 6px;overflow:hidden;font-weight:800;font-size:13px;color:var(--rv)}
+  .tt .tp{aspect-ratio:4/3;background:#e9e0cc}.tt img{width:100%;height:100%;object-fit:cover}
+  .tt span{display:block;padding-top:5px}
+  .tt.on{border-color:var(--rv);box-shadow:0 0 0 2px var(--rv)}
+  select.dd,input.dd{width:100%;padding:10px 12px;border-radius:12px;border:2px solid #9b8c76;background:#fffaf0;font-size:16px;color:var(--ink);-webkit-appearance:none;appearance:none}
+  .searchbtn{grid-column:1/-1;justify-self:center;width:80%;background:linear-gradient(var(--maroon2),var(--maroon));color:#fff;border:0;border-radius:999px;padding:12px;font-weight:800;font-size:18px}
+  .box.rec .searchbtn{background:linear-gradient(var(--rv2),var(--rv))}
+  .boxad{padding:0 12px}.boxad .ad{margin-top:12px;aspect-ratio:12/5}
+  .found{color:#f3e7cf;text-align:center;font-weight:800;margin:14px 0 4px;font-size:17px}
+
+  /* result rows */
+  .res{display:flex;gap:12px;align-items:center;width:100%;margin-top:10px;background:var(--cream);border:3px solid var(--cream2);border-radius:18px;padding:10px;text-align:left;color:inherit;box-shadow:0 2px 6px #0005}
+  .res .ph{position:relative;flex:0 0 42%;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#ddd}
+  .res .ph img{width:100%;height:100%;object-fit:cover}
+  .res .feat{position:absolute;top:0;left:0;right:0;background:#3b3b3bcc;color:#fff;font-size:11px;font-weight:800;text-align:center;padding:3px}
+  .res .t{flex:1;min-width:0}
+  .res b{display:block;font-size:17px;line-height:1.2;color:#203a24}
+  .res .c{display:flex;align-items:center;gap:4px;font-size:14px;margin-top:4px}
+  .res .p{color:var(--maroon);font-weight:800;font-size:20px;margin-top:4px}
+  .res .s{color:var(--muted);font-size:12px;margin-top:3px}
+  .res .chev{flex:0 0 18px;color:var(--maroon)}
+  .none{color:#f3e7cf;text-align:center;padding:16px}
+
+  /* latest listings (start screen) */
+  .panel{margin-top:14px;background:var(--cream);border-radius:20px;overflow:hidden;border:3px solid var(--cream2);box-shadow:0 3px 10px #0005}
+  .panel h2{margin:0;display:flex;align-items:center;gap:12px;background:linear-gradient(var(--maroon2),var(--maroon));color:#fff;font-size:20px;padding:12px 16px}
+  .row{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;background:none;border:0;border-bottom:1px solid #e3d6bb;text-align:left;color:inherit}
+  .row:last-child{border-bottom:0}
+  .row .ph{position:relative;flex:0 0 120px;height:84px;border-radius:12px;overflow:hidden;background:#ddd}
+  .row .ph img{width:100%;height:100%;object-fit:cover}
+  .row .badge{position:absolute;left:6px;bottom:6px;background:#000b;color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:5px}
+  .row .t{flex:1;min-width:0}
+  .row b{display:block;font-size:16px;line-height:1.2;color:#203a24;max-height:2.4em;overflow:hidden}
+  .row .c{display:flex;align-items:center;gap:4px;font-size:13px;margin-top:3px}
+  .row .p{color:var(--maroon);font-weight:800;font-size:17px;margin-top:2px}
+  .row .s{color:var(--muted);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .chev{flex:0 0 18px;color:var(--maroon)}
+  .s2{color:#4a443d;font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rentpill{display:inline-block;margin-top:4px;background:#1f5a2a;color:#fff;font-weight:800;font-size:13px;padding:3px 10px;border-radius:999px}
+  .p.small{font-size:14px!important}
+  .addbtn{display:block;margin-top:14px;text-align:center;text-decoration:none;background:var(--cream);color:var(--maroon);border:3px solid var(--tan);border-radius:14px;padding:11px;font-weight:800}
+
+  /* popup */
+  .pop{position:fixed;inset:0;background:#000b;display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .pop.open{display:flex}
+  .sheet{background:var(--cream);width:100%;max-width:640px;max-height:92vh;overflow-y:auto;border-radius:22px 22px 0 0;-webkit-overflow-scrolling:touch}
+  .gal{position:relative;background:#111}
+  .gal .strip{display:flex;overflow-x:auto;scroll-snap-type:x mandatory}
+  .gal img{flex:0 0 100%;width:100%;aspect-ratio:4/3;object-fit:contain;scroll-snap-align:center}
+  .gal .cnt{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:#000a;color:#fff;font-size:12px;padding:3px 9px;border-radius:999px}
+  .xb{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:0;background:#000a;color:#fff;font-size:20px}
+  .info{padding:14px 16px 20px}
+  .info h4{margin:0;font-size:22px;color:#203a24}
+  .info .sub{color:var(--muted);margin-top:2px}
+  .info .pp{color:var(--maroon);font-size:26px;font-weight:800;margin-top:6px}
+  .mm{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center;font-size:14px}
+  .pill{background:#efe2c4;color:var(--maroon);font-weight:800;border-radius:6px;padding:2px 8px}
+  .specs{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:12px;font-size:15px}
+  .specs div b{font-weight:800}
+  details{margin-top:12px;border:2px solid #d8ccb4;border-radius:12px;background:#fffaf0}
+  summary{padding:10px 12px;font-weight:800;cursor:pointer}
+  details .specs{padding:0 12px 12px;margin-top:0}
+  .info p{white-space:pre-line;line-height:1.45;margin:12px 0 0}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:16px;border:2px solid #d8ccb4;border-radius:14px;overflow:hidden}
+  .act{display:flex;align-items:center;justify-content:center;gap:6px;background:#fffaf0;color:var(--ink);text-decoration:none;border:0;border-right:1px solid #d8ccb4;border-bottom:1px solid #d8ccb4;padding:13px 8px;font-weight:800;font-size:15px}
+  .act.main{background:var(--maroon);color:#fff}
+  .act.wide{grid-column:1/-1}
+  .seller{text-align:center;padding:12px;font-weight:800;background:#efe5cf;grid-column:1/-1}
+  .loading{color:#fff;text-align:center;padding:40px 0}
+</style>
+</head>
+<body>
+<div class="banner"><svg viewBox="0 0 48 32" width="56" height="38" fill="none" stroke="#fff" stroke-width="2.4"><rect x="3" y="12" width="18" height="10" rx="2"/><path d="M7 12V6h8l3 6M21 16l10-10 8 4-4 8"/><path d="M35 18l5 3-3 3"/><circle cx="8" cy="25" r="4" fill="#fff"/><circle cx="18" cy="25" r="3" fill="#fff"/></svg>
+  <div><h1>Equipment for Sale or Rent</h1><small>Buy • Rent • Find Local Equipment</small></div></div>
+<div class="wrap">
+  <div class="area">
+    <label class="pick">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M12 21s6-5.6 6-11a6 6 0 1 0-12 0c0 5.4 6 11 6 11Z"/><path d="M4 17l-2 5h20l-2-5"/></svg>
+      <span class="t"><small>Region</small><b id="regionLbl">All Regions</b></span>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>
+      <select id="regionSel" aria-label="Region"></select>
+    </label>
+    <label class="pick">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21h18M5 21V8l6-3v16M11 21V3l8 4v14"/></svg>
+      <span class="t"><small>City</small><b id="cityLbl">All Cities</b></span>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>
+      <select id="citySel" aria-label="City"></select>
+    </label>
+  </div>
+
+  <div id="loading" class="loading">Loading equipment…</div>
+  <div id="main" class="hide">
+    <div id="adMain"></div>
+    <div class="tiles" id="tiles"></div>
+    <div id="boxWrap"></div>
+    <div id="results"></div>
+  </div>
+</div>
+<div class="pop" id="pop"><div class="sheet" id="sheet"></div></div>
+
+<script>
+(function(){
+  var API = "/api/equipment", AREA_KEY = "lokaalArea";
+  var D=null, sec="", region="", city="", timers=[];
+  var F={}; // filters per section: {cond,type,make,seller,q}
+  function $(id){return document.getElementById(id);}
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function norm(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+  function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||"null");localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
+  function uniq(a){var o=[];a.forEach(function(x){if(x&&o.indexOf(x)<0)o.push(x);});return o.sort();}
+  var PIN='<svg viewBox="0 0 24 24" width="16" height="16" fill="#1f6b2e"><path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>';
+  var CAR='<svg viewBox="0 0 24 24" width="34" height="34" fill="#fff"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11h.5A1.5 1.5 0 0 1 21 12.5V17a1 1 0 0 1-1 1h-1v1.5a1 1 0 0 1-2 0V18H7v1.5a1 1 0 0 1-2 0V18H4a1 1 0 0 1-1-1v-4.5A1.5 1.5 0 0 1 4.5 11H5Zm2.1 0h9.8l-1.2-3.6a.6.6 0 0 0-.6-.4H8.9a.6.6 0 0 0-.6.4L7.1 11ZM6.5 15.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm11 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>';
+  var RV='<svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#fff" stroke-width="1.8"><rect x="2" y="6" width="16" height="10" rx="2"/><path d="M18 9h2l2 3v4h-4"/><circle cx="6.5" cy="17.5" r="1.8" fill="#fff"/><circle cx="17" cy="17.5" r="1.8" fill="#fff"/><path d="M5 9h4v3H5zM11 9h4"/></svg>';
+  var DIG='<svg viewBox="0 0 48 36" width="52" height="40" fill="none" stroke="currentColor" stroke-width="2.6"><rect x="3" y="16" width="20" height="9" rx="2"/><path d="M7 16v-6h9l3 6M23 18l9-12 9 5-4 9"/><path d="M37 20l5 4-4 3"/><rect x="3" y="27" width="22" height="6" rx="3"/></svg>';
+  var LIFT='<svg viewBox="0 0 48 36" width="52" height="40" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M8 26V12h10l4 8v6M30 4v26M30 28h12"/><rect x="8" y="18" width="14" height="8"/><circle cx="12" cy="30" r="4"/><circle cx="25" cy="30" r="3"/></svg>';
+  var SLIDERS='<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>';
+  var CHEV='<svg class="chev" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3"><path d="m9 6 6 6-6 6"/></svg>';
+
+  // ---------- area ----------
+  function fillArea(){
+    var rs=Object.keys(D.regions||{}); D.items.forEach(function(it){ if(it.region&&rs.indexOf(it.region)<0) rs.push(it.region); });
+    $("regionSel").innerHTML='<option value="">All Regions</option>'+rs.map(function(r){return '<option'+(r===region?' selected':'')+'>'+esc(r)+'</option>';}).join("");
+    var cs=uniq(D.items.filter(function(it){return !region||it.region===region;}).map(function(it){return it.city;}));
+    if(city&&cs.indexOf(city)<0) city="";
+    $("citySel").innerHTML='<option value="">All Cities</option>'+cs.map(function(c){return '<option'+(c===city?' selected':'')+'>'+esc(c)+'</option>';}).join("");
+    $("regionLbl").textContent=region||"All Regions"; $("cityLbl").textContent=city||"All Cities";
+  }
+  $("regionSel").onchange=function(){region=this.value;city="";store(AREA_KEY,{region:region,city:city});fillArea();render();};
+  $("citySel").onchange=function(){city=this.value;store(AREA_KEY,{region:region,city:city});fillArea();render();};
+  function inArea(it){ if(city) return norm(it.city)===norm(city); if(region) return it.region===region; return true; }
+
+  // ---------- ads ----------
+  function adBox(el, spot, ribbon){
+    var list=D.ads.filter(function(a){return norm(a.spot)===norm(spot);});
+    if(!list.length){
+      var h=D.advertise.link;
+      el.innerHTML='<'+(h?'a href="'+esc(h)+'" target="_blank"':'div')+' class="ad empty"><div><b>'+esc(D.advertise.text)+'</b><span>Your ad shows here for every buyer in the area</span></div></'+(h?'a':'div')+'>';
+      return;
+    }
+    var i=0;
+    el.innerHTML='<button class="ad"><img alt="Sponsored">'+(ribbon?'<span class="ribbon">'+esc(ribbon)+'</span>':'')+'<span class="tag">SPONSORED</span><div class="over hide"></div>'+(list.length>1?'<div class="dots">'+list.map(function(){return"<i></i>";}).join("")+'</div>':'')+'</button>';
+    var b=el.firstChild, img=b.querySelector("img"), over=b.querySelector(".over"), dots=b.querySelectorAll(".dots i");
+    function show(){
+      var a=list[i]; img.src=a.image;
+      var has=a.title||a.price||a.city;
+      over.classList.toggle("hide",!has);
+      if(has) over.innerHTML=(a.title?'<b>'+esc(a.title)+'</b>':'')+(a.city?'<div class="c">'+PIN+esc(a.city)+'</div>':'')+(a.price?'<span class="p">'+esc(a.price)+'</span>':'');
+      dots.forEach(function(d,k){d.className=k===i?"on":"";});
+    }
+    show();
+    b.onclick=function(){ if(list[i].link) window.open(list[i].link,"_blank"); };
+    if(list.length>1) timers.push(setInterval(function(){i=(i+1)%list.length;show();},8000));
+  }
+
+  // ---------- render ----------
+  function render(){
+    timers.forEach(clearInterval); timers=[];
+    adBox($("adMain"),"Main Page","Featured Equipment");
+    $("tiles").innerHTML=D.sections.map(function(s){
+      var words=s.label.replace(/^Equipment\s*/,"");
+      return '<button class="tile '+esc(s.key)+(s.key===sec?' on':'')+'" data-sec="'+esc(s.key)+'">'+(s.key==="rent"?LIFT:DIG)+'<b>Equipment<br>'+esc(words)+'</b></button>';
+    }).join("");
+    if(!sec){ $("boxWrap").innerHTML=""; renderLatest(); return; }
+    renderBox(); renderResults();
+  }
+
+  var TAG={sale:"For Sale",rent:"For Rent"};
+  function subLine(it){ return [TAG[it.sec], it.seller].filter(Boolean).join(" – "); }
+  function priceBit(it){
+    if(it.sec==="rent") return '<span class="rentpill">For Rent</span>'+(it.price&&it.price!=="Call for Price"?'<div class="p small">'+esc(it.price)+'</div>':'');
+    return it.price?'<div class="p">'+esc(it.price)+'</div>':'';
+  }
+  function rowHtml(it, cls){
+    var extra=[it.industry,it.type,it.condition].filter(Boolean).join(" · ");
+    return '<button class="'+cls+'" data-id="'+esc(it.id)+'"><div class="ph">'+(it.image?'<img loading="lazy" src="'+esc(it.image)+'" alt="">':'')+
+      (it.featured?'<span class="feat">Featured Listing</span>':'')+(cls==="row"?'<span class="badge">'+TAG[it.sec]+'</span>':'')+'</div>'+
+      '<div class="t"><b>'+esc(it.title)+'</b><div class="s2">'+esc(subLine(it))+'</div>'+(it.city?'<div class="c">'+PIN+esc(it.city)+', TX</div>':'')+
+      priceBit(it)+(extra?'<div class="s">'+esc(extra)+'</div>':'')+'</div>'+CHEV+'</button>';
+  }
+
+  // 5 newest uploads from For Sale + For Rent, shown until a button is tapped
+  function renderLatest(){
+    var list=D.items.filter(inArea).slice().sort(function(a,b){return (b.created||0)-(a.created||0);}).slice(0,5);
+    $("results").innerHTML='<div class="panel"><h2>'+SLIDERS+'Latest Listings</h2>'+
+      (list.length?list.map(function(it){return rowHtml(it,"row");}).join(""):'<div class="none" style="color:var(--muted)">No equipment in this area yet.</div>')+'</div>';
+  }
+
+  function secItems(){ return D.items.filter(function(it){return it.sec===sec&&inArea(it);}); }
+
+  function renderBox(){
+    var s=D.sections.filter(function(x){return x.key===sec;})[0]; if(!s) return;
+    var f=F[sec]||(F[sec]={cond:"All",industry:"All",type:"",seller:"",q:""});
+    var base=secItems(), rent=sec==="rent";
+    var conds=uniq(base.map(function(it){return it.condition;}));
+    var inds=uniq(base.map(function(it){return it.industry;}));
+    var types=uniq(base.map(function(it){return it.type;}));
+    var sellers=uniq(base.map(function(it){return it.seller;}));
+    var chip=function(k,v){return '<button class="chip'+(f[k]===v?' on':'')+'" data-f="'+k+'" data-v="'+esc(v)+'">'+esc(v)+'</button>';};
+    var dd=function(k,label,ph,list){return list.length?'<div class="f"><label>'+label+'</label><select class="dd" data-f="'+k+'"><option value="">'+ph+'</option>'+list.map(function(m){return '<option'+(f[k]===m?' selected':'')+'>'+esc(m)+'</option>';}).join("")+'</select></div>':'';};
+    $("boxWrap").innerHTML='<div class="box'+(rent?' rec':'')+'" id="box"><h2>'+SLIDERS+esc(s.listTitle||s.label)+'<button class="x2" data-closebox aria-label="Close">×</button></h2>'+
+      '<div class="boxad" id="adBox"></div>'+
+      '<div class="filters">'+
+        (inds.length?'<div class="f wide"><label>'+(rent?'Use:':'Use / Industry:')+'</label><div class="chips">'+['All'].concat(inds).map(function(c){return chip("industry",c);}).join("")+'</div></div>':'')+
+        (!rent&&conds.length?'<div class="f wide"><label>Condition:</label><div class="chips">'+['All'].concat(conds).map(function(c){return chip("cond",c);}).join("")+'</div></div>':'')+
+        dd("type","Equipment Type:","Select Type",types)+
+        dd("seller",rent?"Rental Company:":"Seller Name:",rent?"Select Company":"Select Seller",sellers)+
+        '<div class="f wide"><input class="dd" id="q" type="search" placeholder="Search equipment…" value="'+esc(f.q)+'"></div>'+
+        '<button class="searchbtn" id="searchBtn">🔍 Search '+(rent?'Rentals':'Equipment')+'</button>'+
+      '</div></div>';
+    adBox($("adBox"), s.adTitle);
+    $("q").oninput=function(){f.q=this.value;renderResults();};
+    $("searchBtn").onclick=function(){renderResults();var r=$("results");if(r)r.scrollIntoView({behavior:"smooth"});};
+    Array.prototype.forEach.call(document.querySelectorAll("select[data-f]"),function(sel){sel.onchange=function(){f[sel.getAttribute("data-f")]=sel.value;renderResults();};});
+  }
+
+  function renderResults(){
+    var f=F[sec], qq=norm(f.q), s=D.sections.filter(function(x){return x.key===sec;})[0];
+    var list=secItems().filter(function(it){
+      return (f.cond==="All"||it.condition===f.cond)&&(f.industry==="All"||it.industry===f.industry)&&(!f.type||it.type===f.type)&&(!f.seller||it.seller===f.seller)&&
+             (!qq||norm(it.title+" "+it.type+" "+it.industry+" "+it.seller+" "+it.make).indexOf(qq)>=0);
+    });
+    $("results").innerHTML='<div class="found">Found: '+list.length+' Item'+(list.length===1?'':'s')+'</div>'+
+      (list.length?list.map(function(it){return rowHtml(it,"res");}).join(""):'<div class="none">No equipment matches. Try “All” or another city.</div>')+
+      (s&&s.addItemLink?'<a class="addbtn" href="'+esc(s.addItemLink)+'" target="_blank" rel="noopener">＋ List Your Equipment</a>':'');
+  }
+
+  // ---------- popup ----------
+  function openItem(id){
+    var it=D.items.filter(function(x){return x.id===id;})[0]; if(!it) return;
+    var tel=(it.phone||"").replace(/[^\d+]/g,""), share=location.origin+location.pathname+"?item="+encodeURIComponent(it.id);
+    var sub=[TAG[it.sec],it.industry,it.type].filter(Boolean).join(" · ");
+    var specs=it.specs.map(function(x){return '<div><b>'+esc(x[0])+':</b> '+esc(x[1])+'</div>';}).join("");
+    var more=it.more.map(function(x){return '<div><b>'+esc(x[0])+':</b> '+esc(x[1])+'</div>';}).join("");
+    var g=it.gallery.length?it.gallery:[];
+    $("sheet").innerHTML='<div class="gal"><div class="strip">'+g.map(function(x){return '<img src="'+esc(x)+'" alt="">';}).join("")+'</div>'+(g.length>1?'<span class="cnt">'+g.length+' photos — swipe</span>':'')+'<button class="xb" data-close>×</button></div>'+
+      '<div class="info"><h4>'+esc(it.title)+'</h4>'+(sub?'<div class="sub">'+esc(sub)+'</div>':'')+(it.price?'<div class="pp">'+esc(it.price)+'</div>':'')+
+      '<div class="mm">'+(it.featured?'<span class="pill">Featured</span>':'')+(it.condition?'<span class="pill">'+esc(it.condition)+'</span>':'')+(it.city?PIN+esc(it.city)+', TX':'')+'</div>'+
+      (specs?'<div class="specs">'+specs+'</div>':'')+
+      (it.desc?'<p>'+esc(it.desc)+'</p>':'')+
+      (more?'<details><summary>Show More</summary><div class="specs">'+more+'</div></details>':'')+
+      '<div class="acts">'+
+        (it.email?'<a class="act" href="mailto:'+esc(it.email)+'?subject='+encodeURIComponent("Lokaal Equipment: "+it.title)+'">✉ Email Seller</a>':'')+
+        (tel?'<a class="act main" href="tel:'+tel+'">☎ '+esc(it.phone)+'</a>':'')+
+        (tel?'<a class="act" href="sms:'+tel+'">Text</a>':'')+
+        (it.address?'<a class="act" target="_blank" rel="noopener" href="https://maps.google.com/?q='+encodeURIComponent(it.address)+'">Directions</a>':'')+
+        (it.website?'<a class="act" target="_blank" rel="noopener" href="'+esc(it.website)+'">Website</a>':'')+
+        (it.link?'<a class="act" target="_blank" rel="noopener" href="'+esc(it.link)+'">Full Listing</a>':'')+
+        '<button class="act" data-share="'+esc(share)+'" data-title="'+esc(it.title)+'">Share</button>'+
+        (it.seller?'<div class="seller">'+(it.sec==="rent"?"Rental: ":"Seller: ")+esc(it.seller)+'</div>':'')+
+      '</div></div>';
+    // make the action grid even: last odd button spans both columns
+    var acts=$("sheet").querySelectorAll(".act"); if(acts.length%2) acts[acts.length-1].classList.add("wide");
+    $("pop").classList.add("open");
+  }
+  function closePop(){$("pop").classList.remove("open");}
+
+  document.addEventListener("click",function(e){
+    var t=e.target.closest("[data-sec],[data-id],[data-f],[data-close],[data-closebox],[data-share]");
+    if(!t){ if(e.target.id==="pop") closePop(); return; }
+    if(t.tagName==="SELECT") return;
+    if(t.hasAttribute("data-close")) return closePop();
+    if(t.hasAttribute("data-closebox")){ sec=""; setUrl(); render(); return; }
+    if(t.hasAttribute("data-share")){
+      var u=t.getAttribute("data-share");
+      if(navigator.share) navigator.share({title:t.getAttribute("data-title"),url:u}).catch(function(){});
+      else if(navigator.clipboard) navigator.clipboard.writeText(u).then(function(){t.textContent="Link copied";});
+      return;
+    }
+    if(t.hasAttribute("data-sec")){
+      var k=t.getAttribute("data-sec"); sec=(sec===k?"":k); setUrl(); render();
+      if(sec) setTimeout(function(){ var b=$("box"); if(b) b.scrollIntoView({behavior:"smooth",block:"start"}); },50);
+      return;
+    }
+    if(t.hasAttribute("data-f")){ F[sec][t.getAttribute("data-f")]=t.getAttribute("data-v"); renderBox(); renderResults(); return; }
+    if(t.hasAttribute("data-id")) openItem(t.getAttribute("data-id"));
+  });
+  function setUrl(){ try{ history.replaceState(null,"",sec?"?sec="+sec:location.pathname); }catch(e){} }
+
+  var saved=store(AREA_KEY); if(saved){region=saved.region||"";city=saved.city||"";}
+  fetch(API).then(function(r){return r.json();}).then(function(data){
+    if(data.error) throw new Error(data.error);
+    D=data; $("loading").classList.add("hide"); $("main").classList.remove("hide");
+    var p=new URLSearchParams(location.search);
+    if(p.get("sec")) sec=p.get("sec");
+    var item=p.get("item"); if(item){ sec=item.split(":")[0]; }
+    fillArea(); render();
+    if(item) openItem(item);
+  }).catch(function(err){ $("loading").textContent="Couldn't load equipment. "+(err&&err.message?err.message:""); });
+})();
+</script>
+</body>
+</html>
