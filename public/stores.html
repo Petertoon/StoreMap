@@ -252,6 +252,13 @@
     .back, .map-view { background: #fffaf0; border-color: #e6d4b4; }
     .cat-head { margin: 0 -10px; }
   </style>
+  <style>
+    /* phone scrolling fix (same as Biz Cards): let swipes on pictures, tiles and buttons scroll the page */
+    html { -webkit-text-size-adjust: 100%; height: auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    body { height: auto; overflow-y: visible; }
+    img { -webkit-user-drag: none; user-select: none; }
+    .tile, .tile .ph, .group, .brand, button, .btn-region, .btn-map, #city-btn, .count-bar, .rest-head, .act { touch-action: manipulation; }
+  </style>
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute">
@@ -599,5 +606,13 @@
     }
     load();
   </script>
+<script>
+  // If shown inside a frame (Wix embed), tell the parent how tall the page is
+  (function(){
+    function postHeight(){ try { if (window.parent !== window) window.parent.postMessage({ type: "stores-height", height: document.documentElement.scrollHeight }, "*"); } catch(e){} }
+    if (window.ResizeObserver) new ResizeObserver(postHeight).observe(document.body);
+    window.addEventListener("load", postHeight);
+  })();
+</script>
 </body>
 </html>
