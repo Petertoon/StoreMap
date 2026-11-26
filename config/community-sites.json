@@ -1,4 +1,7 @@
 {
+  "extraSites": [
+    { "domain": "lokaalr1.com", "siteIdEnv": "WIX_SITE_ID_R1" }
+  ],
   "listingsCollectionName": "Biz Listings",
   "adPage": "Community",
   "timeZone": "America/Chicago",
@@ -8,7 +11,7 @@
     "text": "Everything happening in your local community, all in one place."
   },
   "links": {
-    "postEvent": "",
+    "postEvent": "https://www.lokaalr1.com/submitevents",
     "podcastsPage": ""
   },
   "regions": {
