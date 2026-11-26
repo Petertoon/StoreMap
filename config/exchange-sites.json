@@ -1,0 +1,33 @@
+{
+  "advertiseText": "Your Business Here — Advertise on Lokaal Exchange",
+  "advertiseLink": "",
+  "listingsCollectionName": "Biz Listings",
+  "regions": {
+    "432 Midland rgn": ["Midland", "Odessa", "Andrews", "Seminole", "Wink", "Big Spring", "Monahans", "Kermit", "Stanton", "Lamesa", "Gardendale", "Pecos", "Crane", "McCamey", "Fort Stockton"],
+    "806 Lubbock rgn": ["Lubbock", "Levelland", "Brownfield", "Plainview", "Slaton", "Wolfforth", "Shallowater", "Idalou", "Post", "Tahoka", "Littlefield", "Abernathy", "Lorenzo", "Ralls"]
+  },
+  "sites": [
+    {
+      "key": "home",
+      "label": "Personal & Home Items",
+      "short": "Home Items",
+      "adTitle": "Home Items",
+      "icon": "home",
+      "domain": "lokaalhome1.com",
+      "collectionName": "Ex..Home items",
+      "addItemLink": "",
+      "fields": {}
+    },
+    {
+      "key": "work",
+      "label": "Business & Work Items",
+      "short": "Work Items",
+      "adTitle": "Work Items",
+      "icon": "gear",
+      "domain": "lokaalhub.com",
+      "collectionName": "ExChange",
+      "addItemLink": "",
+      "fields": {}
+    }
+  ]
+}
