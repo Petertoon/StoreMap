@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lokaal Exchange</title>
+<style>
+  :root{
+    --green:#173f1e; --green2:#1f5228; --maroon:#7a2318; --maroon2:#8f2d1f;
+    --cream:#f7efdf; --cream2:#efe3c8; --tan:#d9b98a; --ink:#1d1a17; --muted:#6b6258;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);
+       background:radial-gradient(120% 60% at 20% 0%,#2a6a33 0%,var(--green) 55%,#10301a 100%);min-height:100vh;
+       overflow-x:hidden;touch-action:pan-y}
+  h1.brand{margin:0;padding:14px 12px 12px;text-align:center;background:#fff;color:var(--maroon);font-size:28px;font-weight:800;letter-spacing:-.3px}
+  .wrap{padding:12px 12px 28px;max-width:640px;margin:0 auto}
+  button{font:inherit;cursor:pointer}
+  img{display:block;-webkit-user-drag:none}
+
+  /* region / city */
+  .area{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .pick{position:relative;display:flex;align-items:center;gap:8px;background:var(--cream);border:3px solid var(--tan);
+        border-radius:16px;padding:8px 10px;box-shadow:inset 0 0 0 2px #fff6, 0 2px 6px #0004;min-width:0}
+  .pick svg{flex:0 0 28px;color:var(--maroon)}
+  .pick .t{min-width:0;flex:1}
+  .pick small{display:block;color:var(--maroon);font-size:12px}
+  .pick b{display:block;color:var(--maroon);font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pick select{position:absolute;inset:0;opacity:0;width:100%;height:100%;font-size:16px}
+
+  /* ad window */
+  .ad{position:relative;margin-top:12px;border-radius:20px;overflow:hidden;background:var(--cream);border:4px solid var(--cream2);
+      box-shadow:0 3px 10px #0006;aspect-ratio:12/7}
+  .ad img{width:100%;height:100%;object-fit:cover;transition:opacity .5s}
+  .ad .tag{position:absolute;top:10px;right:10px;background:linear-gradient(#8a6a46,#5e4329);color:#fff;font-weight:800;font-size:13px;
+           padding:6px 14px;border-radius:8px;letter-spacing:.5px;box-shadow:0 2px 4px #0006}
+  .ad .cap{position:absolute;left:0;right:0;bottom:0;padding:22px 12px 10px;color:#fff;font-weight:700;font-size:15px;
+           background:linear-gradient(transparent,#000b)}
+  .ad.empty{display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;background:
+            linear-gradient(135deg,var(--cream),var(--cream2));aspect-ratio:12/5}
+  .ad.empty b{color:var(--maroon);font-size:18px}
+  .ad.empty span{display:block;color:var(--muted);font-size:13px;margin-top:6px}
+  .dots{position:absolute;bottom:8px;left:0;right:0;display:flex;gap:5px;justify-content:center}
+  .dots i{width:6px;height:6px;border-radius:50%;background:#fff8}.dots i.on{background:#fff}
+
+  /* two big buttons */
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .tile{position:relative;display:flex;align-items:center;gap:8px;border:3px solid var(--cream2);border-radius:16px;padding:12px 10px;
+        color:#fff;text-align:left;overflow:hidden;min-height:68px;background:#3b2a1a;box-shadow:0 2px 6px #0005}
+  .tile .bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(.45) saturate(1.1)}
+  .tile>*:not(.bg){position:relative}
+  .tile b{font-size:15px;line-height:1.15;flex:1}
+  .tile svg{flex:0 0 30px}
+
+  /* listings panel */
+  .panel{margin-top:14px;background:var(--cream);border-radius:20px;overflow:hidden;border:3px solid var(--cream2);box-shadow:0 3px 10px #0005}
+  .panel h2{margin:0;display:flex;align-items:center;gap:10px;background:linear-gradient(var(--maroon2),var(--maroon));color:#fff;
+            font-size:20px;padding:12px 14px}
+  .row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid #e3d6bb;width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit}
+  .row:last-child{border-bottom:0}
+  .row img,.row .noimg{width:110px;height:72px;border-radius:12px;object-fit:cover;flex:0 0 110px;background:#ddd}
+  .row .t{flex:1;min-width:0}
+  .row b{display:block;font-size:16px;line-height:1.2;max-height:2.4em;overflow:hidden}
+  .row .meta{display:flex;align-items:center;gap:4px;color:#333;font-size:14px;margin-top:4px}
+  .row .price{color:var(--maroon);font-weight:700;margin-left:auto;padding-left:6px}
+  .chev{color:var(--maroon);flex:0 0 18px}
+  .none{padding:18px;text-align:center;color:var(--muted)}
+
+  /* view all bar */
+  .allbar{margin-top:14px;display:flex;align-items:center;gap:12px;width:100%;background:linear-gradient(var(--maroon2),var(--maroon));
+          color:#fff;border:3px solid var(--cream2);border-radius:18px;padding:12px;text-align:left;box-shadow:0 3px 10px #0005}
+  .allbar .t{flex:1}.allbar b{font-size:19px;display:block}.allbar i{font-size:13px;opacity:.9}
+  .allbar .go{background:var(--cream);color:var(--ink);font-weight:800;border-radius:999px;padding:9px 14px;white-space:nowrap}
+
+  .addbtn{margin-top:12px;width:100%;background:var(--cream);color:var(--maroon);border:3px solid var(--tan);border-radius:14px;
+          padding:11px;font-weight:800;font-size:16px}
+
+  /* list screen */
+  .bar{display:flex;align-items:center;gap:10px;margin:14px 0 10px}
+  .back{background:var(--cream);border:0;border-radius:999px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--maroon)}
+  .bar h3{margin:0;color:#fff;font-size:20px;flex:1}
+  .search{width:100%;margin-top:12px;padding:12px 14px;border-radius:14px;border:3px solid var(--tan);background:var(--cream);font-size:16px}
+  .chips{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:2px}
+  .chip{background:var(--cream);border:2px solid var(--tan);color:var(--maroon);border-radius:999px;padding:7px 14px;font-weight:700;white-space:nowrap}
+  .chip.on{background:var(--maroon);border-color:var(--maroon);color:#fff}
+  .count{color:#f3e7cf;margin:10px 2px 0;font-size:14px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .card{background:var(--cream);border-radius:16px;overflow:hidden;border:2px solid var(--cream2);text-align:left;padding:0;color:inherit;box-shadow:0 2px 6px #0005}
+  .card .ph{position:relative;aspect-ratio:4/3;background:#ddd}
+  .card .ph img{width:100%;height:100%;object-fit:cover}
+  .cond{position:absolute;top:6px;right:6px;background:#efe2c4;color:var(--maroon);font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;box-shadow:0 1px 3px #0005}
+  .card .t{padding:8px 9px 10px}
+  .card b{display:block;font-size:14px;line-height:1.2;max-height:2.4em;overflow:hidden}
+  .card .p{color:var(--maroon);font-weight:800;margin-top:3px}
+  .card .c{color:var(--muted);font-size:12px;margin-top:2px}
+
+  /* popup */
+  .pop{position:fixed;inset:0;background:#000b;display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .pop.open{display:flex}
+  .sheet{background:var(--cream);width:100%;max-width:640px;max-height:92vh;overflow-y:auto;border-radius:22px 22px 0 0;-webkit-overflow-scrolling:touch}
+  .gal{position:relative;background:#111}
+  .gal .strip{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  .gal img{flex:0 0 100%;width:100%;aspect-ratio:4/3;object-fit:contain;scroll-snap-align:center;background:#111}
+  .x{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:0;background:#000a;color:#fff;font-size:20px}
+  .info{padding:14px 16px 22px}
+  .info h4{margin:0;font-size:22px}
+  .info .pp{color:var(--maroon);font-size:22px;font-weight:800;margin-top:4px}
+  .info .mm{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;color:var(--muted);font-size:14px;align-items:center}
+  .pill{background:#efe2c4;color:var(--maroon);font-weight:700;border-radius:6px;padding:2px 8px}
+  .info p{white-space:pre-line;line-height:1.45;margin:12px 0 0}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+  .act{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--maroon);color:#fff;text-decoration:none;border:0;
+       border-radius:12px;padding:12px;font-weight:800;font-size:15px}
+  .act.alt{background:#fff;color:var(--maroon);border:2px solid var(--maroon)}
+  .act.wide{grid-column:1/-1}
+  .loading{color:#fff;text-align:center;padding:40px 0}
+  .hide{display:none!important}
+</style>
+</head>
+<body>
+<h1 class="brand">Lokaal Exchange</h1>
+<div class="wrap">
+
+  <!-- Region / City (shared by both screens) -->
+  <div class="area">
+    <label class="pick">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M12 21s6-5.6 6-11a6 6 0 1 0-12 0c0 5.4 6 11 6 11Z"/><path d="M4 17l-2 5h20l-2-5"/></svg>
+      <span class="t"><small>Region</small><b id="regionLbl">All Regions</b></span>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>
+      <select id="regionSel" aria-label="Region"></select>
+    </label>
+    <label class="pick">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21h18M5 21V8l6-3v16M11 21V3l8 4v14"/><path d="M8 11h0M8 14h0M14 9h2M14 12h2M14 15h2"/></svg>
+      <span class="t"><small>City</small><b id="cityLbl">All Cities</b></span>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>
+      <select id="citySel" aria-label="City"></select>
+    </label>
+  </div>
+
+  <div id="loading" class="loading">Loading items…</div>
+
+  <!-- START SCREEN -->
+  <section id="home" class="hide">
+    <div id="adMain"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="panel">
+      <h2><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V4h8l10 10-8 8L3 12Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Lokaal Exchange Listings</h2>
+      <div id="recent"></div>
+    </div>
+    <button class="allbar" id="viewAll">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9h0M10 9h7M7 13h0M10 13h7"/></svg>
+      <span class="t"><b>All Exchange Items</b><i>Browse all buy, sell, and trade items</i></span>
+      <span class="go">View All ›</span>
+    </button>
+  </section>
+
+  <!-- LIST SCREEN -->
+  <section id="list" class="hide">
+    <div class="bar">
+      <button class="back" id="backBtn" aria-label="Back"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3"><path d="m15 6-6 6 6 6"/></svg></button>
+      <h3 id="listTitle">All Exchange Items</h3>
+    </div>
+    <div id="adList"></div>
+    <input id="q" class="search" type="search" placeholder="Search item name…" autocomplete="off">
+    <div class="chips" id="chips"></div>
+    <div class="count" id="count"></div>
+    <div class="grid" id="grid"></div>
+    <a id="addLink" class="addbtn hide" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener">＋ Add Your Item</a>
+  </section>
+</div>
+
+<!-- ITEM / AD CARD POPUP -->
+<div class="pop" id="pop"><div class="sheet" id="sheet"></div></div>
+
+<script>
+(function(){
+  var API = "/api/exchange";
+  var AREA_KEY = "lokaalArea";     // TODO: match the key stores.html / bizcards.html use so the area is shared
+  var D = null, view = "home", siteFilter = "", cond = "All", q = "", region = "", city = "", adTimers = [];
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+  function norm(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]/g,""); }
+  function store(k,v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)||"null"); localStorage.setItem(k,JSON.stringify(v)); }catch(e){ return null; } }
+  var PIN = '<svg viewBox="0 0 24 24" width="16" height="16" fill="#1f6b2e"><path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>';
+  var CHEV = '<svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3"><path d="m9 6 6 6-6 6"/></svg>';
+  var ICONS = {
+    home:'<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>',
+    gear:'<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>'
+  };
+
+  // ---------- area ----------
+  function allCities(){
+    var set = {};
+    D.items.forEach(function(it){ if(it.city && (!region || it.region===region)) set[it.city]=1; });
+    if(region && D.regions[region]) D.regions[region].forEach(function(c){ /* only list cities that have items */ });
+    return Object.keys(set).sort();
+  }
+  function fillArea(){
+    var rs = Object.keys(D.regions||{});
+    D.items.forEach(function(it){ if(it.region && rs.indexOf(it.region)<0) rs.push(it.region); });
+    $("regionSel").innerHTML = '<option value="">All Regions</option>' + rs.map(function(r){ return '<option'+(r===region?' selected':'')+'>'+esc(r)+'</option>'; }).join("");
+    var cs = allCities();
+    if(city && cs.indexOf(city)<0) city = "";
+    $("citySel").innerHTML = '<option value="">All Cities</option>' + cs.map(function(c){ return '<option'+(c===city?' selected':'')+'>'+esc(c)+'</option>'; }).join("");
+    $("regionLbl").textContent = region || "All Regions";
+    $("cityLbl").textContent = city || "All Cities";
+  }
+  $("regionSel").addEventListener("change", function(){ region=this.value; city=""; store(AREA_KEY,{region:region,city:city}); fillArea(); render(); });
+  $("citySel").addEventListener("change", function(){ city=this.value; store(AREA_KEY,{region:region,city:city}); fillArea(); render(); });
+
+  function inArea(it){
+    if(city) return norm(it.city)===norm(city);
+    if(region) return it.region===region;
+    return true;
+  }
+
+  // ---------- ads ----------
+  function adBox(el, spots, site){
+    var list = D.ads.filter(function(a){ return spots.some(function(s){ return norm(a.spot)===norm(s); }) && (!site || a.site===site); });
+    if(!list.length){
+      var href = D.advertise.link;
+      el.innerHTML = '<'+(href?'a href="'+esc(href)+'"':'div')+' class="ad empty" style="display:flex;text-decoration:none"><div><b>'+esc(D.advertise.text)+'</b><span>Your ad shows here for every buyer in the area</span></div></'+(href?'a':'div')+'>';
+      return;
+    }
+    var i = 0;
+    el.innerHTML = '<div class="ad" role="button"><img alt="Sponsored"><span class="tag">SPONSORED</span>'+(list.length>1?'<div class="dots">'+list.map(function(){return "<i></i>";}).join("")+'</div>':'')+'</div>';
+    var box = el.firstChild, img = box.querySelector("img"), dots = box.querySelectorAll(".dots i");
+    function show(){ var a=list[i]; img.src=a.image; dots.forEach(function(d,k){ d.className = k===i?"on":""; }); }
+    show();
+    box.onclick = function(){ openAd(list[i]); };
+    if(list.length>1) adTimers.push(setInterval(function(){ i=(i+1)%list.length; show(); }, 8000));
+  }
+  function openAd(a){
+    if(a.link){ window.open(a.link, "_blank"); return; }
+    if(a.card){
+      var c=a.card, tel=(c.phone||"").replace(/[^\d+]/g,"");
+      $("sheet").innerHTML = '<div class="gal">'+(c.image?'<img src="'+esc(c.image)+'" alt="">':'')+'<button class="x" data-close>×</button></div>'+
+        '<div class="info"><h4>'+esc(c.title)+'</h4><div class="mm"><span class="pill">Sponsored</span></div><div class="acts">'+
+        (tel?'<a class="act wide" href="tel:'+tel+'">Call '+esc(c.phone)+'</a>':'')+'</div></div>';
+      $("pop").classList.add("open");
+    }
+  }
+
+  // ---------- start screen ----------
+  function rowHtml(it){
+    return '<button class="row" data-id="'+esc(it.id)+'">'+(it.image?'<img loading="lazy" src="'+esc(it.image)+'" alt="">':'<span class="noimg"></span>')+
+      '<span class="t"><b>'+esc(it.title)+'</b><span class="meta">'+(it.city?PIN+esc(it.city)+', TX':'')+(it.price?'<span class="price">'+esc(it.price)+'</span>':'')+'</span></span>'+CHEV+'</button>';
+  }
+  function renderHome(){
+    adBox($("adMain"), ["Main Page"]);
+    $("tiles").innerHTML = D.sites.map(function(s){
+      var pic = (D.items.filter(function(it){ return it.site===s.key && it.image && inArea(it); })[0] || D.items.filter(function(it){ return it.site===s.key && it.image; })[0] || {}).image;
+      return '<button class="tile" data-site="'+esc(s.key)+'">'+(pic?'<span class="bg" style="background-image:url(\''+esc(pic)+'\')"></span>':'')+(ICONS[s.icon]||ICONS.home)+'<b>'+esc(s.label)+'</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="3"><path d="m9 6 6 6-6 6"/></svg></button>';
+    }).join("");
+    var rec = D.items.filter(inArea).slice(0,6);
+    $("recent").innerHTML = rec.length ? rec.map(rowHtml).join("") : '<div class="none">No items in this area yet.</div>';
+  }
+
+  // ---------- list screen ----------
+  function cardHtml(it){
+    return '<button class="card" data-id="'+esc(it.id)+'"><div class="ph">'+(it.image?'<img loading="lazy" src="'+esc(it.image)+'" alt="">':'')+
+      (it.condition?'<span class="cond">'+esc(it.condition)+'</span>':'')+'</div><div class="t"><b>'+esc(it.title)+'</b>'+
+      (it.price?'<div class="p">'+esc(it.price)+'</div>':'')+(it.city?'<div class="c">'+esc(it.city)+', TX</div>':'')+'</div></button>';
+  }
+  function renderList(){
+    var site = D.sites.filter(function(s){ return s.key===siteFilter; })[0];
+    $("listTitle").textContent = site ? site.label : "All Exchange Items";
+    adBox($("adList"), site ? [site.adTitle, "Main Page"] : ["Main Page"], site ? site.key : "");
+    // prefer the list's own ads; Main Page ads fill in only when none exist for this list
+    if(site && D.ads.some(function(a){ return a.site===site.key && norm(a.spot)===norm(site.adTitle); })){ clearAds(); adBox($("adList"), [site.adTitle], site.key); }
+
+    var base = D.items.filter(function(it){ return (!siteFilter || it.site===siteFilter) && inArea(it); });
+    var conds = ["All"]; base.forEach(function(it){ var c=it.condition; if(c && conds.indexOf(c)<0) conds.push(c); });
+    if(conds.indexOf(cond)<0) cond="All";
+    $("chips").innerHTML = conds.length>1 ? conds.map(function(c){ return '<button class="chip'+(c===cond?' on':'')+'" data-cond="'+esc(c)+'">'+esc(c)+'</button>'; }).join("") : "";
+    var qq = norm(q);
+    var list = base.filter(function(it){ return (cond==="All" || it.condition===cond) && (!qq || norm(it.title+" "+it.desc+" "+it.city).indexOf(qq)>=0); });
+    $("count").textContent = "Number of items found: " + list.length;
+    $("grid").innerHTML = list.length ? list.map(cardHtml).join("") : '<div class="none" style="grid-column:1/-1;color:#f3e7cf">No items match.</div>';
+    var add = site && site.addItemLink;
+    $("addLink").classList.toggle("hide", !add); if(add) $("addLink").href = add;
+  }
+
+  function clearAds(){ adTimers.forEach(clearInterval); adTimers = []; }
+  function render(){
+    clearAds();
+    $("home").classList.toggle("hide", view!=="home");
+    $("list").classList.toggle("hide", view!=="list");
+    if(view==="home") renderHome(); else renderList();
+  }
+  function go(v, site){
+    view=v; siteFilter=site||""; q=""; cond="All"; $("q").value="";
+    try{ history.pushState({v:v,s:siteFilter},"", v==="list" ? "?list="+(siteFilter||"all") : location.pathname); }catch(e){}
+    render(); window.scrollTo(0,0);
+  }
+  window.addEventListener("popstate", function(e){ var s=e.state||{}; view=s.v||"home"; siteFilter=s.s||""; render(); });
+
+  // ---------- item popup ----------
+  function openItem(id){
+    var it = D.items.filter(function(x){ return x.id===id; })[0]; if(!it) return;
+    var tel = (it.phone||"").replace(/[^\d+]/g,"");
+    var share = location.origin + location.pathname + "?item=" + encodeURIComponent(it.id);
+    $("sheet").innerHTML =
+      '<div class="gal"><div class="strip">'+(it.gallery.length?it.gallery:[""]).map(function(g){ return g?'<img src="'+esc(g)+'" alt="">':''; }).join("")+'</div><button class="x" data-close>×</button></div>'+
+      '<div class="info"><h4>'+esc(it.title)+'</h4>'+(it.price?'<div class="pp">'+esc(it.price)+'</div>':'')+
+      '<div class="mm">'+(it.condition?'<span class="pill">'+esc(it.condition)+'</span>':'')+(it.city?PIN+esc(it.city)+', TX':'')+(it.seller?' · '+esc(it.seller):'')+'</div>'+
+      (it.desc?'<p>'+esc(it.desc)+'</p>':'')+
+      '<div class="acts">'+
+        (tel?'<a class="act" href="tel:'+tel+'">Call</a><a class="act" href="sms:'+tel+'">Text</a>':'')+
+        (it.email?'<a class="act alt" href="mailto:'+esc(it.email)+'?subject='+encodeURIComponent("Lokaal Exchange: "+it.title)+'">Email</a>':'')+
+        (it.link?'<a class="act '+(tel?'alt':'')+'" href="'+esc(it.link)+'" target="_blank" rel="noopener">Full Listing / Contact</a>':'')+
+        '<button class="act alt" data-share="'+esc(share)+'" data-title="'+esc(it.title)+'">Share</button>'+
+      '</div></div>';
+    $("pop").classList.add("open");
+  }
+  function closePop(){ $("pop").classList.remove("open"); }
+
+  document.addEventListener("click", function(e){
+    var t = e.target.closest("[data-id],[data-site],[data-cond],[data-close],[data-share]");
+    if(!t){ if(e.target.id==="pop") closePop(); return; }
+    if(t.hasAttribute("data-close")) return closePop();
+    if(t.hasAttribute("data-share")){
+      var url=t.getAttribute("data-share"), title=t.getAttribute("data-title");
+      if(navigator.share) navigator.share({title:title,url:url}).catch(function(){});
+      else if(navigator.clipboard) navigator.clipboard.writeText(url).then(function(){ t.textContent="Link copied"; });
+      return;
+    }
+    if(t.hasAttribute("data-cond")){ cond=t.getAttribute("data-cond"); renderList(); return; }
+    if(t.hasAttribute("data-site")) return go("list", t.getAttribute("data-site"));
+    if(t.hasAttribute("data-id")) openItem(t.getAttribute("data-id"));
+  });
+  $("viewAll").addEventListener("click", function(){ go("list",""); });
+  $("backBtn").addEventListener("click", function(){ if(history.state && history.state.v==="list") history.back(); else go("home"); });
+  $("q").addEventListener("input", function(){ q=this.value; renderList(); });
+
+  // ---------- load ----------
+  var saved = store(AREA_KEY); if(saved){ region=saved.region||""; city=saved.city||""; }
+  fetch(API).then(function(r){ return r.json(); }).then(function(data){
+    if(data.error) throw new Error(data.error);
+    D = data; $("loading").classList.add("hide");
+    var p = new URLSearchParams(location.search);
+    if(p.get("list")){ view="list"; siteFilter = p.get("list")==="all" ? "" : p.get("list"); }
+    fillArea(); render();
+    if(p.get("item")) openItem(p.get("item"));
+  }).catch(function(err){
+    $("loading").textContent = "Couldn't load items. " + (err && err.message ? err.message : "");
+  });
+})();
+</script>
+</body>
+</html>
