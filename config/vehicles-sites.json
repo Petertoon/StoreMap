@@ -1,0 +1,32 @@
+{
+  "listingsCollectionName": "Biz Listings",
+  "adPage": "Vehicles",
+  "advertiseText": "Your Vehicle Here — Advertise on Lokaal",
+  "advertiseLink": "",
+  "regions": {
+    "432 Midland rgn": ["Midland", "Odessa", "Andrews", "Seminole", "Wink", "Big Spring", "Monahans", "Kermit", "Stanton", "Lamesa", "Gardendale", "Pecos", "Crane", "McCamey", "Fort Stockton"],
+    "806 Lubbock rgn": ["Lubbock", "Levelland", "Brownfield", "Plainview", "Slaton", "Wolfforth", "Shallowater", "Idalou", "Post", "Tahoka", "Littlefield", "Abernathy", "Lorenzo", "Ralls"]
+  },
+  "sections": [
+    {
+      "key": "cars",
+      "label": "Cars & Trucks",
+      "adTitle": "Cars & Trucks",
+      "listTitle": "Vehicle Listings",
+      "addItemLink": "",
+      "sources": [
+        { "domain": "lokaalhome1.com", "collectionName": "Vehicles", "fields": {} }
+      ]
+    },
+    {
+      "key": "rec",
+      "label": "Recreational Vehicles",
+      "adTitle": "Recreational Vehicles",
+      "listTitle": "Recreational Listings",
+      "addItemLink": "",
+      "sources": [
+        { "domain": "lokaalhome1.com", "collectionName": "Recreational vehicle", "fields": {} }
+      ]
+    }
+  ]
+}
