@@ -1,0 +1,48 @@
+{
+  "listingsCollectionName": "Biz Listings",
+  "adPage": "Properties",
+  "advertiseText": "Your Property Here — Advertise on Lokaal",
+  "advertiseLink": "",
+  "mapCenter": [32.0, -102.1],
+  "regions": {
+    "432 Midland rgn": ["Midland", "Odessa", "Andrews", "Seminole", "Wink", "Big Spring", "Monahans", "Kermit", "Stanton", "Lamesa", "Gardendale", "Pecos", "Crane", "McCamey", "Fort Stockton"],
+    "806 Lubbock rgn": ["Lubbock", "Levelland", "Brownfield", "Plainview", "Slaton", "Wolfforth", "Shallowater", "Idalou", "Post", "Tahoka", "Littlefield", "Abernathy", "Lorenzo", "Ralls"]
+  },
+  "sections": [
+    {
+      "key": "res",
+      "label": "Residential Properties",
+      "adTitle": "Residential",
+      "listTitle": "Find Homes",
+      "color": "#1f5a2a",
+      "addItemLink": "",
+      "sources": [
+        { "domain": "lokaalhome1.com", "collectionName": "Properties 1", "fields": {} }
+      ]
+    },
+    {
+      "key": "com",
+      "label": "Commercial Properties",
+      "adTitle": "Commercial",
+      "listTitle": "Find Commercial",
+      "color": "#7a2318",
+      "addItemLink": "",
+      "sources": [
+        { "domain": "lokaalhub.com", "collectionName": "Commercial", "fields": {} }
+      ]
+    },
+    {
+      "key": "vac",
+      "label": "Vacation Homes & Venues",
+      "adTitle": "Vacation & Venues",
+      "listTitle": "Find a Stay or Venue",
+      "color": "#a06a12",
+      "priceSuffix": "/ night",
+      "defaultListing": "For Rent",
+      "addItemLink": "",
+      "sources": [
+        { "domain": "lokaalhome1.com", "collectionName": "VecationRentals", "fields": {} }
+      ]
+    }
+  ]
+}
