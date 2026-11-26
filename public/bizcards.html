@@ -44,6 +44,20 @@
   .picker select{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
   .picker .chev{width:20px;height:20px;color:var(--maroon)}
 
+  /* ad window */
+  .ad{position:relative;display:block;width:100%;padding:0;margin:0 0 14px;border-radius:20px;overflow:hidden;border:3px solid var(--cream2);
+    background:#1d140d;aspect-ratio:12/5;box-shadow:0 4px 10px rgba(0,0,0,.35);text-align:left}
+  .ad img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .5s}
+  .ad .tag{position:absolute;top:8px;right:10px;font-size:10px;font-weight:700;letter-spacing:.05em;background:#000a;color:#fff;padding:2px 8px;border-radius:10px}
+  .ad .dots{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:5px}
+  .ad .dots i{width:7px;height:7px;border-radius:50%;background:#fff8}
+  .ad .dots i.on{background:#fff}
+  .ad.house{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px;text-align:center;color:#fff;
+    background:linear-gradient(135deg,var(--maroon2),#4a1410)}
+  .ad.house b{font-size:clamp(18px,5.4vw,26px)}
+  .ad.house small{opacity:.9;font-size:14px}
+  .ad.house .pill{margin-top:4px;background:var(--cream);color:var(--ink);font-weight:800;border-radius:30px;padding:7px 16px;font-size:14px}
+
   /* category tiles */
   .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;margin-bottom:14px}
   .tile{min-width:0;display:flex;align-items:center;gap:10px;text-align:left;padding:14px 12px;border-radius:20px;border:3px solid var(--cream2);
@@ -160,6 +174,7 @@
 
   <!-- MAIN VIEW -->
   <section id="mainView">
+    <div class="ad" id="adMain"></div>
     <div class="tiles" id="tiles"></div>
     <div class="panel">
       <div class="panel-hd">
@@ -181,6 +196,7 @@
       <button class="back" id="backBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
       <div class="title"><h2 id="cvTitle"></h2><small id="cvSub"></small></div>
     </div>
+    <div class="ad" id="adCards"></div>
     <div class="chips" id="chips"></div>
     <input class="search" id="search" type="search" placeholder="Search by name, trade or phone…" autocomplete="off">
     <div id="cardList"></div>
@@ -198,7 +214,7 @@
   var STORES_API = "/api/stores";
   var ALL = "__all";
 
-  var S = { cats: [], cards: [], regions: [], citiesByRegion: {}, region: "", city: "", cat: "", trade: "", chip: "" };
+  var S = { cats: [], cards: [], regions: [], citiesByRegion: {}, region: "", city: "", cat: "", trade: "", chip: "", ads: [] };
   var $ = function(id){ return document.getElementById(id); };
   var lc = function(s){ return String(s || "").trim().toLowerCase(); };
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -291,6 +307,8 @@
     return Promise.all([cardsP, storesP]).then(function(res){
       S.cats = res[0].categories || [];
       S.cards = res[0].cards || [];
+      S.ads = res[0].ads || [];
+      S.order = {}; (res[0].listings || []).forEach(function(l){ if (l.order != null) S.order[l.cat + "|" + lc(l.name)] = l.order; });
       // city -> region from the Stores data, so cards with only a city still land in the right region
       var cityRegion = {};
       (res[1].stores || []).forEach(function(s){ if (s.region) { addPlace(s.region, s.city); if (s.city) cityRegion[lc(s.city)] = s.region; } });
@@ -349,8 +367,9 @@
     if (cat.comingSoon) { $("tradeRows").innerHTML = '<div class="empty">'+esc(cat.label)+' is coming soon.</div>'; return; }
     var counts = {};
     areaCards(cat.key).forEach(function(c){ counts[c.listing] = (counts[c.listing]||0) + 1; });
+    var ord = function(t){ var o = (S.order || {})[cat.key + "|" + lc(t)]; return o == null ? 1e9 : o; };
     var trades = Object.keys(counts).sort(function(a,b){
-      var ao = /^other/i.test(a), bo = /^other/i.test(b); return ao - bo || a.localeCompare(b);
+      var ao = /^other/i.test(a), bo = /^other/i.test(b); return ao - bo || ord(a) - ord(b) || a.localeCompare(b);
     });
     $("tradeRows").innerHTML = trades.length ? trades.map(function(t){
       return '<button class="row" data-trade="'+esc(t)+'">'+svg(tradeIcon(t),"ic")+'<span>'+esc(t)+'</span><em>'+counts[t]+'</em>'+CHEV+'</button>';
@@ -359,7 +378,7 @@
   }
   $("tiles").addEventListener("click", function(e){
     var b = e.target.closest(".tile"); if (!b) return;
-    S.cat = b.getAttribute("data-cat"); writeUrl(false); renderMain();
+    S.cat = b.getAttribute("data-cat"); writeUrl(false); renderMain(); renderAd("adMain");
   });
   $("tradeRows").addEventListener("click", function(e){
     var b = e.target.closest(".row"); if (!b) return;
@@ -411,7 +430,7 @@
     $("cardList").innerHTML = html;
   }
   $("search").addEventListener("input", renderCards);
-  $("chips").addEventListener("click", function(e){ var b = e.target.closest("[data-chip]"); if (!b) return; S.chip = b.getAttribute("data-chip"); writeUrl(false); renderCards(); });
+  $("chips").addEventListener("click", function(e){ var b = e.target.closest("[data-chip]"); if (!b) return; S.chip = b.getAttribute("data-chip"); writeUrl(false); renderCards(); renderAd("adCards"); });
   $("backBtn").addEventListener("click", function(){
     if (history.state && history.state.inPage) history.back();
     else { S.trade = ""; writeUrl(false); render(); }
@@ -470,12 +489,80 @@
   }
   function toast(msg){ var t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2200); }
 
+
+  // ---------- ad window ----------
+  // Picks the most specific paid ad: trade chip > listing > whole tile (blank listing) > any tile. None -> "advertise here".
+  var adTimer = null, adKey = "";
+  function areaOk(a){
+    if (a.city && S.city && lc(a.city) !== lc(S.city)) return false;
+    if (a.region && S.region && lc(a.region) !== lc(S.region)) return false;
+    return true;
+  }
+  function pickAds(){
+    var ads = S.ads.filter(areaOk);
+    var inListing = S.trade && S.trade !== ALL;
+    var levels = [];
+    if (inListing) {
+      var sameCat = ads.filter(function(a){ return a.cat === S.cat; });
+      if (S.chip) levels.push(sameCat.filter(function(a){ return a.trade && lc(a.trade) === lc(S.chip) && (!a.listing || lc(a.listing) === lc(S.trade)); }));
+      levels.push(sameCat.filter(function(a){ return a.listing && lc(a.listing) === lc(S.trade) && !a.trade; }));
+      levels.push(sameCat.filter(function(a){ return a.listing && lc(a.listing) === lc(S.trade); }));
+      // a trade-only ad (no listing) also shows when that trade is inside this listing
+      var tradesHere = {}; S.cards.forEach(function(c){ if (c.cat === S.cat && c.listing === S.trade) tradesHere[lc(c.trade)] = 1; });
+      levels.push(sameCat.filter(function(a){ return !a.listing && a.trade && tradesHere[lc(a.trade)]; }));
+      levels.push(sameCat.filter(function(a){ return !a.listing && !a.trade; }));
+    } else {
+      levels.push(ads.filter(function(a){ return a.cat === S.cat && !a.listing && !a.trade; }));
+      levels.push(ads.filter(function(a){ return !a.listing && !a.trade; }));
+    }
+    for (var i = 0; i < levels.length; i++) if (levels[i].length) {
+      // ads set for this exact city first
+      return levels[i].slice().sort(function(a,b){ return (b.city ? 1 : 0) - (a.city ? 1 : 0); });
+    }
+    return [];
+  }
+  function renderAd(boxId){
+    var box = $(boxId);
+    var key = [boxId, S.cat, S.trade, S.chip, S.city, S.region].join("|");
+    if (key === adKey && box.innerHTML) return;
+    adKey = key;
+    clearInterval(adTimer);
+    var list = pickAds();
+    var cat = catObj(S.cat) || {};
+    if (!list.length) {
+      var where = S.trade && S.trade !== ALL ? S.trade : (cat.label || "this page");
+      box.className = "ad house";
+      box.innerHTML = '<b>Your Business Here</b><small>Advertise in ' + esc(where) + (S.city ? ' · ' + esc(S.city) : '') + '</small>'
+        + (cat.advertiseLink ? '<span class="pill">' + esc(cat.advertiseText || "Advertise With Us") + ' ›</span>' : '');
+      box.onclick = cat.advertiseLink ? function(){ window.open(cat.advertiseLink, /^tel:|^mailto:/.test(cat.advertiseLink) ? "_self" : "_blank"); } : null;
+      box.style.cursor = cat.advertiseLink ? "pointer" : "default";
+      return;
+    }
+    var i = 0;
+    function show(){
+      var a = list[i];
+      box.className = "ad";
+      box.style.cursor = (a.card || a.link || a.phone) ? "pointer" : "default";
+      box.innerHTML = '<img src="' + esc(a.image) + '" alt="' + esc(a.title || "Sponsored") + '">'
+        + '<span class="tag">SPONSORED</span>'
+        + (list.length > 1 ? '<span class="dots">' + list.map(function(_, j){ return '<i class="' + (j === i ? 'on' : '') + '"></i>'; }).join("") + '</span>' : '');
+      box.onclick = function(){
+        if (a.card && S.cards.some(function(c){ return c.id === a.card; })) openCard(a.card, true);
+        else if (a.link) window.open(a.link, "_blank", "noopener");
+        else if (a.phone) location.href = "tel:" + a.phone;
+      };
+    }
+    show();
+    if (list.length > 1) adTimer = setInterval(function(){ i = (i + 1) % list.length; show(); }, 8000);
+  }
+
   // ---------- render / routing ----------
   function render(){
     var inCards = !!S.trade;
     $("mainView").classList.toggle("hidden", inCards);
     $("cardsView").classList.toggle("hidden", !inCards);
     if (inCards) renderCards(); else renderMain();
+    renderAd(inCards ? "adCards" : "adMain");
   }
   function applyUrl(){
     var u = readUrl();
