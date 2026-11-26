@@ -1,0 +1,40 @@
+{
+  "listingsCollectionName": "Biz Listings",
+  "adPage": "Community",
+  "timeZone": "America/Chicago",
+  "welcome": {
+    "image": "",
+    "title": "Your Community. Your People.",
+    "text": "Everything happening in your local community, all in one place."
+  },
+  "links": {
+    "postEvent": "",
+    "podcastsPage": ""
+  },
+  "regions": {
+    "432 Midland rgn": ["Midland", "Odessa", "Andrews", "Seminole", "Wink", "Big Spring", "Monahans", "Kermit", "Stanton", "Lamesa", "Gardendale", "Pecos", "Crane", "McCamey", "Fort Stockton"],
+    "806 Lubbock rgn": ["Lubbock", "Levelland", "Brownfield", "Plainview", "Slaton", "Wolfforth", "Shallowater", "Idalou", "Post", "Tahoka", "Littlefield", "Abernathy", "Lorenzo", "Ralls"]
+  },
+  "sections": [
+    {
+      "key": "events", "kind": "events", "label": "Community Events", "listTitle": "Community Events",
+      "sources": [ { "domain": "lokaalr1.com", "collectionName": "CommunityEvents", "fields": {} } ]
+    },
+    {
+      "key": "churches", "kind": "churches", "label": "Churches & Ministries", "listTitle": "Churches & Ministries",
+      "sources": [ { "domain": "lokaalr1.com", "collectionName": "Church Podcast", "fields": {} } ]
+    },
+    {
+      "key": "podcasts", "kind": "podcasts", "label": "Church Podcasts", "listTitle": "Church Podcasts",
+      "sources": [ { "domain": "lokaalr1.com", "collectionName": "Church Podcast", "fields": {} } ]
+    },
+    {
+      "key": "fundraisers", "kind": "fundraisers", "label": "Fundraisers", "listTitle": "Fundraisers",
+      "sources": [ { "domain": "lokaalr1.com", "collectionName": "Fundraisers", "fields": {} } ]
+    },
+    {
+      "key": "projects", "kind": "projects", "label": "Community Projects", "sub": "Neighbors Helping Neighbors", "listTitle": "Community Projects",
+      "sources": [ { "domain": "lokaalr1.com", "collectionName": "Community Projects", "fields": {} } ]
+    }
+  ]
+}
