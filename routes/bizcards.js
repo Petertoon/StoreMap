@@ -178,7 +178,8 @@ async function fetchSite(site, refresh) {
           id: item.id,
           cat: site.key,
           name: name || "Business",
-          trade: cleanText(getField(d, f.trade || "trade", /trade|listing|category|service|type/i)) || site.otherTrade || "Other",
+          trade: cleanText(getField(d, f.trade || "trade", /trade|category|service|type/i)) || null,
+          listing: cleanText(getField(d, f.listing || "listing", /listing/i)) || null,
           phone: cleanPhone(getField(d, f.phone || "phone", /phone|tel|mobile|cell/i)),
           phoneText: cleanText(getField(d, f.phone || "phone", /phone|tel|mobile|cell/i)),
           address,
@@ -202,9 +203,14 @@ async function fetchSite(site, refresh) {
     console.error(`[bizcards] ${site.key}:`, status.error);
     if (cached) return cached.data; // keep showing the last good copy
   }
+  status.withListing = out.filter((x) => x.listing).length;
+  for (const c of out) {
+    c.listing = c.listing || c.trade || site.otherListing || "Other";
+    c.trade = c.trade || c.listing;
+  }
   status.count = out.length;
   status.withCity = out.filter((x) => x.city).length;
-  status.trades = [...new Set(out.map((x) => x.trade))].sort();
+  status.listings = [...new Set(out.map((x) => x.listing))].sort();
   if (!status.error) cache.set(site.key, { data: out, expires: Date.now() + CACHE_TTL_MS });
   return out;
 }
@@ -221,7 +227,7 @@ router.get("/", async (req, res) => {
     res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     res.json({
       categories: bizSites.map((s) => ({
-        key: s.key, label: s.label, sub: s.sub || "", icon: s.icon || "", listTitle: s.listTitle || `${s.label} Trades`,
+        key: s.key, label: s.label, sub: s.sub || "", icon: s.icon || "", listTitle: s.listTitle || `${s.label} Listings`,
         comingSoon: !s.domain,
       })),
       cards: results.flat(),
