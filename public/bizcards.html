@@ -87,6 +87,10 @@
   .title{color:#fff;min-width:0}
   .title h2{margin:0;font-size:20px;line-height:1.1}
   .title small{opacity:.85}
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:0 0 10px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;border:2px solid var(--cream2);background:transparent;color:#fff;border-radius:20px;padding:6px 12px;font-weight:700;font-size:13px;white-space:nowrap}
+  .chip.on{background:var(--cream);color:var(--maroon)}
   .search{width:100%;padding:11px 14px;border-radius:14px;border:2px solid var(--cream2);background:#fffaf0;margin-bottom:12px}
   .group-hd{color:#fff;font-weight:800;font-size:17px;margin:16px 2px 8px;padding-bottom:4px;border-bottom:2px solid #ffffff33}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -177,7 +181,8 @@
       <button class="back" id="backBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
       <div class="title"><h2 id="cvTitle"></h2><small id="cvSub"></small></div>
     </div>
-    <input class="search" id="search" type="search" placeholder="Search by name or phone…" autocomplete="off">
+    <div class="chips" id="chips"></div>
+    <input class="search" id="search" type="search" placeholder="Search by name, trade or phone…" autocomplete="off">
     <div id="cardList"></div>
   </section>
 </div>
@@ -193,7 +198,7 @@
   var STORES_API = "/api/stores";
   var ALL = "__all";
 
-  var S = { cats: [], cards: [], regions: [], citiesByRegion: {}, region: "", city: "", cat: "", trade: "" };
+  var S = { cats: [], cards: [], regions: [], citiesByRegion: {}, region: "", city: "", cat: "", trade: "", chip: "" };
   var $ = function(id){ return document.getElementById(id); };
   var lc = function(s){ return String(s || "").trim().toLowerCase(); };
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -227,6 +232,9 @@
     camera:'<path d="M3 8h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13" r="3.5"/>',
     wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
     store:'<path d="M3 9l1.5-5h15L21 9M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/>',
+    monitor:'<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/>',
+    dollar:'<circle cx="12" cy="12" r="9"/><path d="M15 9a3 2.5 0 0 0-3-1.5c-1.7 0-3 .9-3 2.2 0 3 6 1.6 6 4.6 0 1.3-1.3 2.2-3 2.2a3 2.5 0 0 1-3-1.5M12 6v1.5M12 16.5V18"/>',
+    party:'<path d="M4 20l5-14 9 9z"/><path d="M14 4l1 2M19 5l-2 2M20 10l-2-.5M7.5 10.5l6 6"/>',
     dots:'<circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>'
   };
   var RULES = [
@@ -236,7 +244,8 @@
     [/concrete|screed|cement|masonry|brick|stone/, "brick"], [/dirt|grade|excavat|dozer|backhoe|equipment/, "dozer"],
     [/oil|energy|field|pipeline/, "oil"], [/truck|trailer|diesel|towing/, "truck"], [/auto|mechanic|car repair|tire/, "car"],
     [/wash|detail|power ?wash|pressure/, "drop"], [/hair|salon|nail|barber|beauty|spa|lash/, "scissors"],
-    [/account|bookkeep|tax|payroll/, "calc"], [/law|legal|attorney/, "scale"], [/insur/, "shield"],
+    [/account|bookkeep|tax|payroll/, "calc"], [/financ|bank|loan|invest|mortgage/, "dollar"],
+    [/computer|it service|tech|phone repair|electronic/, "monitor"], [/event|party|rental|supply|wedding/, "party"], [/handyman/, "hammer"], [/law|legal|attorney/, "scale"], [/insur/, "shield"],
     [/real ?estate|realt|property|land|title/, "sign"], [/clean|maid|janitor/, "sparkle"],
     [/chiro|health|medical|massage|dental|clinic|therapy|school/, "heart"], [/food|restaurant|cater|bakery/, "fork"],
     [/photo|video/, "camera"], [/repair|service|weld|fabric/, "wrench"], [/boutique|shop|store|retail/, "store"]
@@ -254,14 +263,15 @@
   // ---------- URL state ----------
   function readUrl(){
     var q = new URLSearchParams(location.search);
-    return { region: q.get("region") || "", city: q.get("city") || "", cat: q.get("cat") || "", trade: q.get("trade") || "", card: q.get("card") || "" };
+    return { region: q.get("region") || "", city: q.get("city") || "", cat: q.get("cat") || "", trade: q.get("listing") || "", card: q.get("card") || "" };
   }
   function writeUrl(push, card){
     var q = new URLSearchParams();
     if (S.region) q.set("region", S.region);
     if (S.city) q.set("city", S.city);
     if (S.cat) q.set("cat", S.cat);
-    if (S.trade) q.set("trade", S.trade);
+    if (S.trade) q.set("listing", S.trade);
+    if (S.chip) q.set("trade", S.chip);
     if (card) q.set("card", card);
     var url = location.pathname + (q.toString() ? "?" + q : "");
     var wasInPage = !!(history.state && history.state.inPage);
@@ -338,7 +348,7 @@
     $("listTitle").textContent = cat.listTitle || (cat.label + " Trades");
     if (cat.comingSoon) { $("tradeRows").innerHTML = '<div class="empty">'+esc(cat.label)+' is coming soon.</div>'; return; }
     var counts = {};
-    areaCards(cat.key).forEach(function(c){ counts[c.trade] = (counts[c.trade]||0) + 1; });
+    areaCards(cat.key).forEach(function(c){ counts[c.listing] = (counts[c.listing]||0) + 1; });
     var trades = Object.keys(counts).sort(function(a,b){
       var ao = /^other/i.test(a), bo = /^other/i.test(b); return ao - bo || a.localeCompare(b);
     });
@@ -354,10 +364,10 @@
   $("tradeRows").addEventListener("click", function(e){
     var b = e.target.closest(".row"); if (!b) return;
     if (!S.cat && S.cats[0]) S.cat = S.cats[0].key;
-    S.trade = b.getAttribute("data-trade"); $("search").value = ""; writeUrl(true); render(); window.scrollTo(0,0);
+    S.trade = b.getAttribute("data-trade"); S.chip = ""; $("search").value = ""; writeUrl(true); render(); window.scrollTo(0,0);
   });
   $("allBtn").addEventListener("click", function(){
-    S.trade = ALL; $("search").value = ""; writeUrl(true); render(); window.scrollTo(0,0);
+    S.trade = ALL; S.chip = ""; $("search").value = ""; writeUrl(true); render(); window.scrollTo(0,0);
   });
 
   // ---------- cards view ----------
@@ -373,10 +383,17 @@
   function renderCards(){
     var all = S.trade === ALL;
     var q = lc($("search").value);
-    var list = areaCards(all ? "" : S.cat).filter(function(c){ return all || c.trade === S.trade; });
+    var list = areaCards(all ? "" : S.cat).filter(function(c){ return all || c.listing === S.trade; });
+    // trade chips inside a listing
+    var tc = {}; list.forEach(function(c){ tc[c.trade] = (tc[c.trade]||0) + 1; });
+    var tradesIn = Object.keys(tc).sort();
+    if (S.chip && !tc[S.chip]) S.chip = "";
+    $("chips").innerHTML = (!all && tradesIn.length > 1) ? ['<button class="chip'+(S.chip?'':' on')+'" data-chip="">All ('+list.length+')</button>'].concat(tradesIn.map(function(t){
+      return '<button class="chip'+(S.chip===t?' on':'')+'" data-chip="'+esc(t)+'">'+esc(t)+' ('+tc[t]+')</button>'; })).join("") : "";
+    if (S.chip) list = list.filter(function(c){ return c.trade === S.chip; });
     if (q) {
       var qd = q.replace(/[^0-9]/g, "");
-      list = list.filter(function(c){ return lc(c.name).indexOf(q) >= 0 || lc(c.trade).indexOf(q) >= 0 || (qd.length >= 3 && (c.phone||"").indexOf(qd) >= 0); });
+      list = list.filter(function(c){ return lc(c.name).indexOf(q) >= 0 || lc(c.trade).indexOf(q) >= 0 || lc(c.listing).indexOf(q) >= 0 || (qd.length >= 3 && (c.phone||"").indexOf(qd) >= 0); });
     }
     list = sortCards(list);
     $("cvTitle").textContent = all ? "All Business Cards" : S.trade;
@@ -385,7 +402,7 @@
     if (!list.length) html = '<div class="panel"><div class="empty">No cards found'+(q?' for "'+esc(q)+'"':'')+'.</div></div>';
     else if (all) {
       var groups = {};
-      list.forEach(function(c){ var k = c.trade; (groups[k] = groups[k] || []).push(c); });
+      list.forEach(function(c){ var k = c.listing; (groups[k] = groups[k] || []).push(c); });
       Object.keys(groups).sort().forEach(function(t){
         html += '<div class="group-hd">'+esc(t)+'</div><div class="grid">'+groups[t].map(cardHtml).join("")+'</div>';
       });
@@ -394,6 +411,7 @@
     $("cardList").innerHTML = html;
   }
   $("search").addEventListener("input", renderCards);
+  $("chips").addEventListener("click", function(e){ var b = e.target.closest("[data-chip]"); if (!b) return; S.chip = b.getAttribute("data-chip"); writeUrl(false); renderCards(); });
   $("backBtn").addEventListener("click", function(){
     if (history.state && history.state.inPage) history.back();
     else { S.trade = ""; writeUrl(false); render(); }
@@ -443,7 +461,7 @@
   document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeCard(true); });
   function share(c){
     var q = new URLSearchParams(); if (S.region) q.set("region", S.region); if (S.city) q.set("city", S.city);
-    q.set("cat", c.cat); q.set("trade", c.trade); q.set("card", c.id);
+    q.set("cat", c.cat); q.set("listing", c.listing); q.set("card", c.id);
     var url = location.origin + location.pathname + "?" + q;
     var data = { title: c.name, text: c.name + " — " + c.trade + (c.phoneText ? " — " + c.phoneText : ""), url: url };
     if (navigator.share) navigator.share(data).catch(function(){});
@@ -463,7 +481,7 @@
     var u = readUrl();
     S.region = u.region || S.region; S.city = u.city || (u.region ? "" : S.city);
     S.cat = u.cat || S.cat || (S.cats[0] && S.cats[0].key) || "";
-    S.trade = u.trade;
+    S.trade = u.trade; S.chip = new URLSearchParams(location.search).get("trade") || "";
     fillPickers(); render();
     if (u.card) openCard(u.card, false); else closeCard(false);
   }
