@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Local Business Cards</title>
+<meta name="description" content="Find local services and professionals in your area.">
+<style>
+  :root{
+    --green:#173b21; --green2:#2f6b2f; --green3:#24552a;
+    --cream:#f7eedb; --cream2:#efe2c4; --tan:#c9a46a;
+    --maroon:#7b1f1f; --maroon2:#952b25; --ink:#2b1a10; --muted:#6d5b48;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  html,body{overflow-x:hidden}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:var(--ink);
+    background:var(--green) repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 2px,transparent 2px 7px);
+    min-height:100vh;padding:14px 12px calc(40px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:640px;margin:0 auto}
+  button,select,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+  .hidden{display:none!important}
+
+  /* header */
+  .banner{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:22px;border:3px solid var(--cream);
+    background:linear-gradient(100deg,#2a160c 0%,#4a2a17 55%,#6b4325 100%);color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.35)}
+  .banner svg{flex:0 0 auto;width:54px;height:54px}
+  .banner h1{margin:0;font-size:clamp(22px,6vw,30px);line-height:1.05;font-weight:800}
+  .banner p{margin:3px 0 0;font-style:italic;font-size:clamp(12px,3.4vw,15px);opacity:.92}
+  .banner .gold{height:3px;margin-top:7px;border-radius:2px;background:linear-gradient(90deg,transparent,#d9a640,transparent)}
+
+  /* region / city */
+  .pickers{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:14px 0}
+  .picker{position:relative;min-width:0;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:16px;background:var(--cream);
+    border:3px solid #d8b98a;box-shadow:inset 0 0 0 2px #b74a3c33,0 3px 6px rgba(0,0,0,.3)}
+  .picker:first-child{border-color:#c9534a}
+  .picker svg{width:26px;height:26px;flex:0 0 auto;color:var(--maroon)}
+  .picker .lbl{flex:1;min-width:0}
+  .picker small{display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+  .picker b{display:block;font-size:16px;color:var(--maroon);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .picker select{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+  .picker .chev{width:20px;height:20px;color:var(--maroon)}
+
+  /* category tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;margin-bottom:14px}
+  .tile{min-width:0;display:flex;align-items:center;gap:10px;text-align:left;padding:14px 12px;border-radius:20px;border:3px solid var(--cream2);
+    background:var(--cream);color:var(--maroon);box-shadow:0 3px 8px rgba(0,0,0,.3);min-height:112px}
+  .tile svg{width:38px;height:38px;flex:0 0 auto}
+  .tile span{min-width:0}
+  @media(max-width:460px){.tile{flex-direction:column;align-items:flex-start;gap:6px}.tile svg{width:32px;height:32px}}
+  .tile b{display:block;font-size:clamp(15px,4.4vw,22px);line-height:1.05;font-weight:800}
+  .tile small{display:block;margin-top:4px;font-size:12px;color:var(--ink);opacity:.85}
+  .tile.on{background:linear-gradient(180deg,#3d7f3a,var(--green3));color:#fff;border-color:#dfe9cf}
+  .tile.on small{color:#fff}
+  .tile.soon{opacity:.6}
+
+  /* trade list */
+  .panel{border-radius:20px;overflow:hidden;background:var(--cream);border:3px solid var(--cream2);box-shadow:0 3px 8px rgba(0,0,0,.3);margin-bottom:14px}
+  .panel-hd{display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(180deg,var(--maroon2),var(--maroon));color:#fff}
+  .panel-hd svg{width:32px;height:32px}
+  .panel-hd h2{margin:0;font-size:clamp(18px,5.4vw,24px);font-weight:800}
+  .rows{padding:8px}
+  .row{width:100%;display:flex;align-items:center;gap:14px;padding:11px 14px;margin:0 0 7px;border-radius:14px;border:1px solid #e3d3b2;
+    background:linear-gradient(180deg,#fffaf0,#f2e6cc);box-shadow:0 2px 3px rgba(0,0,0,.12);text-align:left}
+  .row:last-child{margin-bottom:0}
+  .row svg.ic{width:30px;height:30px;color:var(--green3);flex:0 0 auto}
+  .row span{flex:1;font-weight:700;font-size:17px}
+  .row em{font-style:normal;font-size:12px;font-weight:700;color:#fff;background:var(--green2);border-radius:20px;padding:2px 8px}
+  .row svg.go{width:20px;height:20px;color:var(--green3)}
+  .empty{padding:18px;text-align:center;color:var(--muted)}
+
+  .allbar{display:flex;align-items:center;gap:12px;width:100%;padding:14px 14px;border-radius:20px;border:3px solid var(--cream2);
+    background:linear-gradient(180deg,var(--maroon2),var(--maroon));color:#fff;text-align:left;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+  .allbar svg.idc{width:50px;height:50px;flex:0 0 auto}
+  .allbar div{flex:1}
+  .allbar b{display:block;font-size:clamp(18px,5.4vw,24px)}
+  .allbar small{display:block;font-size:13px;opacity:.9}
+  .allbar .pill{flex:0 0 auto;background:var(--cream);color:var(--ink);font-weight:800;border-radius:30px;padding:9px 14px;white-space:nowrap}
+
+  /* card list view */
+  .topbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .back{display:flex;align-items:center;gap:4px;padding:9px 14px 9px 10px;border-radius:30px;border:2px solid var(--cream2);background:var(--cream);color:var(--maroon);font-weight:800}
+  .back svg{width:18px;height:18px}
+  .title{color:#fff;min-width:0}
+  .title h2{margin:0;font-size:20px;line-height:1.1}
+  .title small{opacity:.85}
+  .search{width:100%;padding:11px 14px;border-radius:14px;border:2px solid var(--cream2);background:#fffaf0;margin-bottom:12px}
+  .group-hd{color:#fff;font-weight:800;font-size:17px;margin:16px 2px 8px;padding-bottom:4px;border-bottom:2px solid #ffffff33}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:380px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--cream);border-radius:14px;overflow:hidden;border:2px solid var(--cream2);display:flex;flex-direction:column;box-shadow:0 3px 6px rgba(0,0,0,.3)}
+  .card .pic{display:block;width:100%;aspect-ratio:7/4;background:#fff;border:0;padding:0}
+  .card .pic img{width:100%;height:100%;object-fit:contain;display:block}
+  .card .pic .noimg{display:flex;height:100%;align-items:center;justify-content:center;color:var(--muted);font-weight:700;padding:8px;text-align:center}
+  .card .info{padding:8px 10px 4px;flex:1}
+  .card .info b{display:block;font-size:15px;line-height:1.15}
+  .card .info small{display:block;color:var(--maroon);font-size:12px;margin-top:2px}
+  .card .acts{display:flex;gap:6px;padding:6px 8px 8px}
+  .act{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;border-radius:10px;border:0;
+    background:var(--green2);color:#fff;font-weight:700;font-size:13px;text-decoration:none}
+  .act.alt{background:var(--maroon)}
+  .act svg{width:16px;height:16px}
+  .note{color:#fff;opacity:.85;font-size:13px;margin:10px 2px}
+
+  /* card popup */
+  .modal{position:fixed;inset:0;background:rgba(10,20,12,.82);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+  @media(min-width:600px){.modal{align-items:center}}
+  .sheet{width:100%;max-width:560px;max-height:94vh;overflow:auto;background:var(--cream);border-radius:22px 22px 0 0;padding:14px 14px calc(18px + env(safe-area-inset-bottom))}
+  @media(min-width:600px){.sheet{border-radius:22px}}
+  .sheet .big{width:100%;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e3d3b2}
+  .sheet .big img{width:100%;display:block;max-height:60vh;object-fit:contain}
+  .flip{display:flex;gap:6px;justify-content:center;margin:8px 0 0}
+  .flip button{border:2px solid var(--maroon);background:transparent;color:var(--maroon);border-radius:20px;padding:4px 14px;font-weight:700}
+  .flip button.on{background:var(--maroon);color:#fff}
+  .sheet h3{margin:12px 2px 2px;font-size:21px}
+  .sheet .tr{margin:0 2px;color:var(--maroon);font-weight:700}
+  .sheet .meta{margin:8px 2px;color:var(--muted);font-size:14px}
+  .sheet .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .sheet .btns .act{padding:12px;font-size:15px;border-radius:12px}
+  .close{display:block;width:100%;margin-top:10px;padding:11px;border-radius:12px;border:2px solid #d8c6a4;background:transparent;font-weight:700}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000c;color:#fff;padding:9px 16px;border-radius:20px;z-index:60}
+  .loading{color:#fff;text-align:center;padding:30px;opacity:.85}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="banner">
+    <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round" aria-hidden="true">
+      <rect x="4" y="12" width="56" height="40" rx="6"/><circle cx="22" cy="28" r="6" fill="#fff"/>
+      <path d="M12 44c1-6 5-9 10-9s9 3 10 9z" fill="#fff"/><path d="M38 26h14M38 33h14M38 40h10" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>Local Business Cards</h1>
+      <p>Find Local Services &amp; Professionals in Your Area</p>
+      <div class="gold"></div>
+    </div>
+  </header>
+
+  <div class="pickers">
+    <label class="picker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M12 21s-6-5.4-6-10.5a6 6 0 0 1 12 0C18 15.6 12 21 12 21z"/><path d="M4 18l-2 4h20l-2-4"/></svg>
+      <span class="lbl"><small>Region</small><b id="regionLbl">Select Region</b></span>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      <select id="regionSel" aria-label="Select region"></select>
+    </label>
+    <label class="picker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 21h18M5 21V9h5v12M10 21V4h6v17M16 21v-9h4v9"/><path d="M12 7h2M12 10h2M12 13h2M7 12h1M7 15h1"/></svg>
+      <span class="lbl"><small>City</small><b id="cityLbl">Select City</b></span>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      <select id="citySel" aria-label="Select city"></select>
+    </label>
+  </div>
+
+  <!-- MAIN VIEW -->
+  <section id="mainView">
+    <div class="tiles" id="tiles"></div>
+    <div class="panel">
+      <div class="panel-hd">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/><path d="M4 4l5 5M3 6l3-3"/></svg>
+        <h2 id="listTitle">Trades</h2>
+      </div>
+      <div class="rows" id="tradeRows"><div class="loading" style="color:var(--muted)">Loading business cards…</div></div>
+    </div>
+    <button class="allbar" id="allBtn">
+      <svg class="idc" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"><rect x="4" y="12" width="56" height="40" rx="6"/><circle cx="22" cy="28" r="6" fill="#fff"/><path d="M12 44c1-6 5-9 10-9s9 3 10 9z" fill="#fff"/><path d="M38 26h14M38 33h14M38 40h10" stroke-linecap="round"/></svg>
+      <div><b>All Business Cards</b><small id="allSub">View every business &amp; service in your selected area</small></div>
+      <span class="pill">View All ›</span>
+    </button>
+  </section>
+
+  <!-- CARDS VIEW -->
+  <section id="cardsView" class="hidden">
+    <div class="topbar">
+      <button class="back" id="backBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+      <div class="title"><h2 id="cvTitle"></h2><small id="cvSub"></small></div>
+    </div>
+    <input class="search" id="search" type="search" placeholder="Search by name or phone…" autocomplete="off">
+    <div id="cardList"></div>
+  </section>
+</div>
+
+<div class="modal hidden" id="modal" role="dialog" aria-modal="true">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var API = "/api/bizcards";
+  var STORES_API = "/api/stores";
+  var ALL = "__all";
+
+  var S = { cats: [], cards: [], regions: [], citiesByRegion: {}, region: "", city: "", cat: "", trade: "" };
+  var $ = function(id){ return document.getElementById(id); };
+  var lc = function(s){ return String(s || "").trim().toLowerCase(); };
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  // ---------- icons ----------
+  var P = {
+    home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v11h5v-6h4v6h5V10"/>',
+    briefcase:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18M11 12h2v2h-2z"/>',
+    appliance:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 8h14M8 5.5h.01M11 5.5h.01M14 5.5h.01"/>',
+    hammer:'<path d="M14 6l4 4M3 21l9-9M11 7l3-3 3 1 3 3-1 1-3-1-4 4z"/>',
+    bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+    snow:'<path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19M9 3l3 3 3-3M9 21l3-3 3 3"/>',
+    leaf:'<path d="M5 21c0-9 5-15 15-16 0 10-6 15-15 16z"/><path d="M5 21l8-8"/>',
+    paint:'<rect x="3" y="3" width="15" height="6" rx="1"/><path d="M18 6h3v5h-9v3"/><rect x="10" y="14" width="4" height="7" rx="1"/>',
+    pipe:'<path d="M6 3v7a5 5 0 0 0 10 0V8"/><path d="M13 8h6M4 3h4M16 5v3"/>',
+    roof:'<path d="M2 14L12 5l10 9"/><path d="M16 8V5h2v4.5"/>',
+    truck:'<path d="M2 6h11v10H2zM13 9h5l3 4v3h-8"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+    car:'<path d="M3 16v-4l2-5h14l2 5v4z"/><path d="M3 12h18"/><circle cx="7" cy="16.5" r="1.8"/><circle cx="17" cy="16.5" r="1.8"/>',
+    drop:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
+    scissors:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.5 7.5L20 18M8.5 16.5L20 6"/>',
+    calc:'<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15v3M8 18h.01M12 18h.01"/>',
+    scale:'<path d="M12 3v18M7 21h10M4 7h16M6 7l-3 6a3 3 0 0 0 6 0zM18 7l-3 6a3 3 0 0 0 6 0z"/>',
+    shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+    sign:'<path d="M12 2v20M5 6h12l2 2.5L17 11H5z"/><path d="M8 22h8"/>',
+    brick:'<rect x="3" y="5" width="18" height="14"/><path d="M3 9.7h18M3 14.3h18M9 5v4.7M15 9.7v4.6M9 14.3V19"/>',
+    dozer:'<path d="M3 15h12V9h-4l-2-3H5v9"/><path d="M15 12h3l3 4"/><rect x="3" y="15" width="12" height="4" rx="2"/>',
+    oil:'<path d="M6 21l3-15h6l3 15M9 6l3-3 3 3M7.5 13h9M8.3 9.5h7.4"/>',
+    sparkle:'<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2zM19 15l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/>',
+    heart:'<path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 6-8 11-8 11z"/><path d="M8 12h2l1-2 2 4 1-2h2"/>',
+    fork:'<path d="M7 2v8a2 2 0 0 0 2 2v10M5 2v6M9 2v6M17 22V2c-2 1-3 4-3 8h3"/>',
+    camera:'<path d="M3 8h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13" r="3.5"/>',
+    wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+    store:'<path d="M3 9l1.5-5h15L21 9M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/>',
+    dots:'<circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>'
+  };
+  var RULES = [
+    [/applian/, "appliance"], [/hvac|heat|cool|a\/c|air cond/, "snow"], [/electric/, "bolt"],
+    [/plumb|septic|water well/, "pipe"], [/roof/, "roof"], [/paint/, "paint"],
+    [/landscap|lawn|tree|yard|garden|mow/, "leaf"], [/cabinet|carpent|framing|wood|millwork|remodel|construct|builder/, "hammer"],
+    [/concrete|screed|cement|masonry|brick|stone/, "brick"], [/dirt|grade|excavat|dozer|backhoe|equipment/, "dozer"],
+    [/oil|energy|field|pipeline/, "oil"], [/truck|trailer|diesel|towing/, "truck"], [/auto|mechanic|car repair|tire/, "car"],
+    [/wash|detail|power ?wash|pressure/, "drop"], [/hair|salon|nail|barber|beauty|spa|lash/, "scissors"],
+    [/account|bookkeep|tax|payroll/, "calc"], [/law|legal|attorney/, "scale"], [/insur/, "shield"],
+    [/real ?estate|realt|property|land|title/, "sign"], [/clean|maid|janitor/, "sparkle"],
+    [/chiro|health|medical|massage|dental|clinic|therapy|school/, "heart"], [/food|restaurant|cater|bakery/, "fork"],
+    [/photo|video/, "camera"], [/repair|service|weld|fabric/, "wrench"], [/boutique|shop|store|retail/, "store"]
+  ];
+  function svg(name, cls){ return '<svg class="'+(cls||"")+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+(P[name]||P.dots)+'</svg>'; }
+  function tradeIcon(t){ var s = lc(t); for (var i=0;i<RULES.length;i++) if (RULES[i][0].test(s)) return RULES[i][1]; return "dots"; }
+  var CHEV = '<svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg>';
+  var PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>';
+  var PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21s-6-5.4-6-10.5a6 6 0 0 1 12 0C18 15.6 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg>';
+
+  // ---------- storage (remembered area; optional) ----------
+  function saveArea(){ try { localStorage.setItem("lokaalArea", JSON.stringify({ region: S.region, city: S.city })); } catch(e){} }
+  function loadArea(){ try { return JSON.parse(localStorage.getItem("lokaalArea") || "null"); } catch(e){ return null; } }
+
+  // ---------- URL state ----------
+  function readUrl(){
+    var q = new URLSearchParams(location.search);
+    return { region: q.get("region") || "", city: q.get("city") || "", cat: q.get("cat") || "", trade: q.get("trade") || "", card: q.get("card") || "" };
+  }
+  function writeUrl(push, card){
+    var q = new URLSearchParams();
+    if (S.region) q.set("region", S.region);
+    if (S.city) q.set("city", S.city);
+    if (S.cat) q.set("cat", S.cat);
+    if (S.trade) q.set("trade", S.trade);
+    if (card) q.set("card", card);
+    var url = location.pathname + (q.toString() ? "?" + q : "");
+    var wasInPage = !!(history.state && history.state.inPage);
+    history[push ? "pushState" : "replaceState"]({ inPage: push || wasInPage }, "", url);
+  }
+
+  // ---------- data ----------
+  function addPlace(region, city){
+    region = (region || "").trim(); city = (city || "").trim();
+    if (!region) return;
+    if (!S.citiesByRegion[region]) { S.citiesByRegion[region] = []; S.regions.push(region); }
+    if (city && !S.citiesByRegion[region].some(function(c){ return lc(c) === lc(city); })) S.citiesByRegion[region].push(city);
+  }
+  function load(){
+    var cardsP = fetch(API).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); });
+    var storesP = fetch(STORES_API).then(function(r){ return r.ok ? r.json() : { stores: [] }; }).catch(function(){ return { stores: [] }; });
+    return Promise.all([cardsP, storesP]).then(function(res){
+      S.cats = res[0].categories || [];
+      S.cards = res[0].cards || [];
+      // city -> region from the Stores data, so cards with only a city still land in the right region
+      var cityRegion = {};
+      (res[1].stores || []).forEach(function(s){ if (s.region) { addPlace(s.region, s.city); if (s.city) cityRegion[lc(s.city)] = s.region; } });
+      S.cards.forEach(function(c){
+        if (!c.region && c.city && cityRegion[lc(c.city)]) c.region = cityRegion[lc(c.city)];
+        addPlace(c.region, c.city);
+      });
+      S.regions.sort();
+      Object.keys(S.citiesByRegion).forEach(function(r){ S.citiesByRegion[r].sort(); });
+    });
+  }
+
+  // Cards for the chosen area. Cards with no city yet show in every city of their region (until City is filled in).
+  function inArea(c){
+    if (S.region && c.region && lc(c.region) !== lc(S.region)) return false;
+    if (S.city && c.city && lc(c.city) !== lc(S.city)) return false;
+    return true;
+  }
+  function areaCards(cat){ return S.cards.filter(function(c){ return (!cat || c.cat === cat) && inArea(c); }); }
+  function sortCards(list){
+    return list.slice().sort(function(a,b){
+      var ao = a.order == null ? 1e9 : a.order, bo = b.order == null ? 1e9 : b.order;
+      return ao - bo || a.name.localeCompare(b.name);
+    });
+  }
+  function areaName(){ return S.city || S.region || "all areas"; }
+  function catObj(key){ return S.cats.filter(function(c){ return c.key === key; })[0]; }
+
+  // ---------- pickers ----------
+  function fillPickers(){
+    var rs = $("regionSel"), cs = $("citySel");
+    rs.innerHTML = '<option value="">All regions</option>' + S.regions.map(function(r){ return '<option'+(r===S.region?' selected':'')+'>'+esc(r)+'</option>'; }).join("");
+    var cities = S.region ? (S.citiesByRegion[S.region] || []) : [].concat.apply([], S.regions.map(function(r){ return S.citiesByRegion[r]; })).filter(function(c,i,a){ return a.indexOf(c)===i; }).sort();
+    cs.innerHTML = '<option value="">All cities</option>' + cities.map(function(c){ return '<option'+(lc(c)===lc(S.city)?' selected':'')+'>'+esc(c)+'</option>'; }).join("");
+    $("regionLbl").textContent = S.region || "Select Region";
+    $("cityLbl").textContent = S.city || "Select City";
+  }
+  $("regionSel").addEventListener("change", function(){
+    S.region = this.value; S.city = ""; saveArea(); fillPickers(); writeUrl(false); render();
+  });
+  $("citySel").addEventListener("change", function(){
+    S.city = this.value;
+    if (S.city && !S.region) S.region = S.regions.filter(function(r){ return S.citiesByRegion[r].some(function(c){ return lc(c)===lc(S.city); }); })[0] || "";
+    saveArea(); fillPickers(); writeUrl(false); render();
+  });
+
+  // ---------- main view ----------
+  function renderMain(){
+    $("tiles").innerHTML = S.cats.map(function(c){
+      return '<button class="tile'+(c.key===S.cat?' on':'')+(c.comingSoon?' soon':'')+'" data-cat="'+esc(c.key)+'">'
+        + svg(c.icon || "dots") + '<span><b>'+esc(c.label)+'</b><small>'+esc(c.comingSoon ? "Coming soon" : c.sub)+'</small></span></button>';
+    }).join("");
+    var cat = catObj(S.cat) || S.cats[0];
+    if (!cat) { $("tradeRows").innerHTML = '<div class="empty">No categories set up.</div>'; return; }
+    $("listTitle").textContent = cat.listTitle || (cat.label + " Trades");
+    if (cat.comingSoon) { $("tradeRows").innerHTML = '<div class="empty">'+esc(cat.label)+' is coming soon.</div>'; return; }
+    var counts = {};
+    areaCards(cat.key).forEach(function(c){ counts[c.trade] = (counts[c.trade]||0) + 1; });
+    var trades = Object.keys(counts).sort(function(a,b){
+      var ao = /^other/i.test(a), bo = /^other/i.test(b); return ao - bo || a.localeCompare(b);
+    });
+    $("tradeRows").innerHTML = trades.length ? trades.map(function(t){
+      return '<button class="row" data-trade="'+esc(t)+'">'+svg(tradeIcon(t),"ic")+'<span>'+esc(t)+'</span><em>'+counts[t]+'</em>'+CHEV+'</button>';
+    }).join("") : '<div class="empty">No '+esc(cat.label)+' cards in '+esc(areaName())+' yet.</div>';
+    $("allSub").textContent = "View every business & service in " + (S.city || S.region ? areaName() : "your selected area");
+  }
+  $("tiles").addEventListener("click", function(e){
+    var b = e.target.closest(".tile"); if (!b) return;
+    S.cat = b.getAttribute("data-cat"); writeUrl(false); renderMain();
+  });
+  $("tradeRows").addEventListener("click", function(e){
+    var b = e.target.closest(".row"); if (!b) return;
+    if (!S.cat && S.cats[0]) S.cat = S.cats[0].key;
+    S.trade = b.getAttribute("data-trade"); $("search").value = ""; writeUrl(true); render(); window.scrollTo(0,0);
+  });
+  $("allBtn").addEventListener("click", function(){
+    S.trade = ALL; $("search").value = ""; writeUrl(true); render(); window.scrollTo(0,0);
+  });
+
+  // ---------- cards view ----------
+  function cardHtml(c){
+    var pic = c.thumb ? '<img loading="lazy" src="'+esc(c.thumb)+'" data-full="'+esc(c.image)+'" alt="'+esc(c.name)+' business card" onerror="if(this.dataset.full&&this.src!==this.dataset.full){this.src=this.dataset.full}">'
+                      : '<span class="noimg">'+esc(c.name)+'</span>';
+    var acts = (c.phone ? '<a class="act" href="tel:'+esc(c.phone)+'">'+PHONE+'Call</a>' : '')
+      + '<button class="act alt" data-open="'+esc(c.id)+'">View</button>';
+    return '<div class="card"><button class="pic" data-open="'+esc(c.id)+'">'+pic+'</button>'
+      + '<div class="info"><b>'+esc(c.name)+'</b><small>'+esc(c.trade)+(c.city ? ' · '+esc(c.city) : '')+'</small></div>'
+      + '<div class="acts">'+acts+'</div></div>';
+  }
+  function renderCards(){
+    var all = S.trade === ALL;
+    var q = lc($("search").value);
+    var list = areaCards(all ? "" : S.cat).filter(function(c){ return all || c.trade === S.trade; });
+    if (q) {
+      var qd = q.replace(/[^0-9]/g, "");
+      list = list.filter(function(c){ return lc(c.name).indexOf(q) >= 0 || lc(c.trade).indexOf(q) >= 0 || (qd.length >= 3 && (c.phone||"").indexOf(qd) >= 0); });
+    }
+    list = sortCards(list);
+    $("cvTitle").textContent = all ? "All Business Cards" : S.trade;
+    $("cvSub").textContent = (all ? "" : ((catObj(S.cat)||{}).label || "") + " · ") + areaName() + " · " + list.length + " card" + (list.length===1?"":"s");
+    var html = "";
+    if (!list.length) html = '<div class="panel"><div class="empty">No cards found'+(q?' for "'+esc(q)+'"':'')+'.</div></div>';
+    else if (all) {
+      var groups = {};
+      list.forEach(function(c){ var k = c.trade; (groups[k] = groups[k] || []).push(c); });
+      Object.keys(groups).sort().forEach(function(t){
+        html += '<div class="group-hd">'+esc(t)+'</div><div class="grid">'+groups[t].map(cardHtml).join("")+'</div>';
+      });
+    } else html = '<div class="grid">'+list.map(cardHtml).join("")+'</div>';
+    if (S.city && list.some(function(c){ return !c.city; })) html += '<p class="note">Some cards don\'t have a city yet and show in every city.</p>';
+    $("cardList").innerHTML = html;
+  }
+  $("search").addEventListener("input", renderCards);
+  $("backBtn").addEventListener("click", function(){
+    if (history.state && history.state.inPage) history.back();
+    else { S.trade = ""; writeUrl(false); render(); }
+  });
+  $("cardList").addEventListener("click", function(e){
+    var b = e.target.closest("[data-open]"); if (b) openCard(b.getAttribute("data-open"), true);
+  });
+
+  // ---------- card popup ----------
+  function openCard(id, push){
+    var c = S.cards.filter(function(x){ return x.id === id; })[0]; if (!c) return;
+    var side = "front";
+    var where = c.address || [c.name, c.city, "TX"].filter(Boolean).join(", ");
+    var dir = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(c.address ? c.address : where);
+    function draw(){
+      var src = side === "back" ? c.back : c.image;
+      $("sheet").innerHTML =
+        '<div class="big">' + (src ? '<img src="'+esc(src)+'" alt="'+esc(c.name)+' business card">' : '<div class="empty">No card picture yet</div>') + '</div>'
+        + (c.back ? '<div class="flip"><button data-side="front" class="'+(side==="front"?"on":"")+'">Front</button><button data-side="back" class="'+(side==="back"?"on":"")+'">Back</button></div>' : '')
+        + '<h3>'+esc(c.name)+'</h3><p class="tr">'+esc(c.trade)+'</p>'
+        + '<div class="meta">'+[c.phoneText, c.address || c.city, c.description].filter(Boolean).map(esc).join("<br>")+'</div>'
+        + '<div class="btns">'
+        + (c.phone ? '<a class="act" href="tel:'+esc(c.phone)+'">'+PHONE+'Call</a>' : '')
+        + '<a class="act alt" target="_blank" rel="noopener" href="'+esc(dir)+'">'+PIN+'Directions</a>'
+        + (c.website ? '<a class="act alt" target="_blank" rel="noopener" href="'+esc(c.website)+'">Website</a>' : '')
+        + (c.email ? '<a class="act alt" href="mailto:'+esc(c.email)+'">Email</a>' : '')
+        + '<button class="act" id="shareBtn">Share</button>'
+        + '</div><button class="close" id="closeBtn">Close</button>';
+    }
+    draw();
+    $("modal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    if (push) writeUrl(true, c.id);
+    $("sheet").onclick = function(e){
+      var f = e.target.closest("[data-side]");
+      if (f) { side = f.getAttribute("data-side"); draw(); return; }
+      if (e.target.closest("#closeBtn")) { closeCard(true); return; }
+      if (e.target.closest("#shareBtn")) share(c);
+    };
+  }
+  function closeCard(goBack){
+    if ($("modal").classList.contains("hidden")) return;
+    $("modal").classList.add("hidden"); document.body.style.overflow = "";
+    if (goBack) { if (readUrl().card) history.back(); }
+  }
+  $("modal").addEventListener("click", function(e){ if (e.target === this) closeCard(true); });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeCard(true); });
+  function share(c){
+    var q = new URLSearchParams(); if (S.region) q.set("region", S.region); if (S.city) q.set("city", S.city);
+    q.set("cat", c.cat); q.set("trade", c.trade); q.set("card", c.id);
+    var url = location.origin + location.pathname + "?" + q;
+    var data = { title: c.name, text: c.name + " — " + c.trade + (c.phoneText ? " — " + c.phoneText : ""), url: url };
+    if (navigator.share) navigator.share(data).catch(function(){});
+    else if (navigator.clipboard) navigator.clipboard.writeText(url).then(function(){ toast("Link copied"); }, function(){ toast(url); });
+    else toast(url);
+  }
+  function toast(msg){ var t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2200); }
+
+  // ---------- render / routing ----------
+  function render(){
+    var inCards = !!S.trade;
+    $("mainView").classList.toggle("hidden", inCards);
+    $("cardsView").classList.toggle("hidden", !inCards);
+    if (inCards) renderCards(); else renderMain();
+  }
+  function applyUrl(){
+    var u = readUrl();
+    S.region = u.region || S.region; S.city = u.city || (u.region ? "" : S.city);
+    S.cat = u.cat || S.cat || (S.cats[0] && S.cats[0].key) || "";
+    S.trade = u.trade;
+    fillPickers(); render();
+    if (u.card) openCard(u.card, false); else closeCard(false);
+  }
+  window.addEventListener("popstate", applyUrl);
+
+  load().then(function(){
+    var saved = loadArea(), u = readUrl();
+    if (!u.region && !u.city && saved) { S.region = saved.region || ""; S.city = saved.city || ""; }
+    if (S.region && !S.citiesByRegion[S.region]) { S.region = ""; S.city = ""; }
+    applyUrl();
+  }).catch(function(err){
+    console.error(err);
+    $("tradeRows").innerHTML = '<div class="empty">Could not load business cards. Please try again.</div>';
+  });
+})();
+</script>
+</body>
+</html>
