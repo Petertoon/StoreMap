@@ -28,41 +28,36 @@ function readJson(file) {
   catch (e) { return null; }
 }
 
-// Find the Wix API key + site ID for a domain inside config/sites.json, whatever its shape.
+// Wix credentials — same method as routes/bizcards.js: find the site with the same domain
+// in config/sites.json and read its apiKeyEnv / accountIdEnv / siteIdEnv from Render env vars.
 function findWixCreds(domain) {
   const want = bareDomain(domain);
   const cfg = readJson("sites.json");
   if (!cfg) return { error: "config/sites.json not found or not valid JSON" };
-  let found = null;
-  (function walk(node) {
-    if (found || !node || typeof node !== "object") return;
-    if (!Array.isArray(node)) {
-      const hasDomain = Object.values(node).some((v) => typeof v === "string" && bareDomain(v) === want);
-      if (hasDomain) { found = node; return; }
-    }
-    Object.values(node).forEach(walk);
-  })(cfg);
-  if (!found) return { error: `no block for ${want} in config/sites.json` };
-
-  const pick = (re) => {
-    for (const [k, v] of Object.entries(found)) {
-      if (!re.test(k) || typeof v !== "string" || !v) continue;
-      // value may be an env var name (e.g. "WIX_API_KEY_HUB") or key ends in Env
-      if (/env$/i.test(k) || (/^[A-Z0-9_]+$/.test(v) && process.env[v])) return process.env[v] || "";
-      return v;
-    }
-    return "";
+  const list = Array.isArray(cfg) ? cfg : cfg.sites || [];
+  const match = list.find((s) => bareDomain(s.domain) === want);
+  if (!match) return { error: `no site with domain ${want} in config/sites.json` };
+  const creds = {
+    apiKey: process.env[match.apiKeyEnv],
+    accountId: process.env[match.accountIdEnv],
+    siteId: process.env[match.siteIdEnv],
+    from: match.siteId || want,
   };
-  const apiKey = pick(/api.?key/i);
-  const siteId = pick(/site.?id/i);
-  if (!apiKey || !siteId) return { error: `found ${want} in sites.json but missing apiKey/siteId (keys: ${Object.keys(found).join(", ")})` };
-  return { apiKey, siteId };
+  if (!creds.apiKey || !creds.accountId || !creds.siteId) {
+    return { error: `found ${want} in sites.json but its env vars (${match.apiKeyEnv}, ${match.accountIdEnv}, ${match.siteIdEnv}) are not all set on Render` };
+  }
+  return creds;
 }
 
 async function wix(creds, method, url, body) {
   const res = await fetch(WIX + url, {
     method,
-    headers: { Authorization: creds.apiKey, "wix-site-id": creds.siteId, "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: creds.apiKey,
+      "wix-account-id": creds.accountId,
+      "wix-site-id": creds.siteId,
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await res.text();
@@ -84,15 +79,15 @@ function findCollection(collections, name) {
 async function queryAll(creds, collectionId) {
   const items = [];
   let offset = 0;
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 20; i++) {
     const out = await wix(creds, "POST", "/items/query", {
       dataCollectionId: collectionId,
-      query: { paging: { limit: 1000, offset } },
+      query: { paging: { limit: 100, offset } },
     });
     const batch = (out.dataItems || []).map((d) => ({ ...(d.data || {}), _id: (d.data && d.data._id) || d.id }));
     items.push(...batch);
-    if (batch.length < 1000) break;
-    offset += 1000;
+    if (batch.length < 100) break;
+    offset += 100;
   }
   return items;
 }
@@ -208,6 +203,7 @@ async function load() {
     debug.push(d);
     const creds = findWixCreds(site.domain);
     if (creds.error) { d.errors.push(creds.error); continue; }
+    d.credentialsFrom = creds.from;
 
     let collections = [];
     try { collections = await listCollections(creds); }
