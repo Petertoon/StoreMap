@@ -29,20 +29,32 @@ function readJson(file) {
 }
 
 // ---------- Wix connection (same as bizcards.js) ----------
+// Wix keys: a site listed in config/sites.json works as on the other pages.
+// A site that is NOT in sites.json (lokaalr1.com) is set in community-sites.json "extraSites":
+//   { "domain": "lokaalr1.com", "siteIdEnv": "WIX_SITE_ID_R1" }
+// It borrows the API key + account ID from the first site in sites.json (same Wix account),
+// so only one new Render env var is needed. This keeps lokaalr1 out of the Stores page.
 function findWixCreds(domain) {
   const want = bareDomain(domain);
   const cfg = readJson("sites.json");
   if (!cfg) return { error: "config/sites.json not found or not valid JSON" };
   const list = Array.isArray(cfg) ? cfg : cfg.sites || [];
-  const match = list.find((s) => bareDomain(s.domain) === want);
-  if (!match) return { error: `no site with domain ${want} in config/sites.json` };
+  let match = list.find((s) => bareDomain(s.domain) === want);
+  if (!match) {
+    const own = readJson("community-sites.json") || {};
+    const extra = (own.extraSites || []).find((s) => bareDomain(s.domain) === want);
+    if (!extra) return { error: `no site with domain ${want} in config/sites.json or community-sites.json extraSites` };
+    const base = list[0] || {};
+    match = { siteId: want, apiKeyEnv: extra.apiKeyEnv || base.apiKeyEnv, accountIdEnv: extra.accountIdEnv || base.accountIdEnv, siteIdEnv: extra.siteIdEnv };
+  }
   const c = {
     apiKey: process.env[match.apiKeyEnv],
     accountId: process.env[match.accountIdEnv],
     siteId: process.env[match.siteIdEnv],
     from: match.siteId || want,
   };
-  if (!c.apiKey || !c.accountId || !c.siteId) return { error: `env vars for ${want} not all set on Render` };
+  if (!c.siteId) return { error: `Render env var ${match.siteIdEnv} (site ID for ${want}) is not set` };
+  if (!c.apiKey || !c.accountId) return { error: `API key / account ID env vars for ${want} not set on Render` };
   return c;
 }
 async function wix(c, method, url, body) {
