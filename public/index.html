@@ -99,7 +99,7 @@
     // Lifts the card panel off the bottom edge so the Wix app's bottom bar doesn't cover it.
     // Raise this number to slide the cards up more, lower it to move them down.
     // You can also test a value without editing code: add ?lift=250 to the web address.
-    const PANEL_BOTTOM = Number(new URLSearchParams(location.search).get("lift")) || 10;
+    const PANEL_BOTTOM = Number(new URLSearchParams(location.search).get("lift")) || 90;
     document.documentElement.style.setProperty("--panel-bottom", PANEL_BOTTOM + "px");
 
     const map = new mapboxgl.Map({
