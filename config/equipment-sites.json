@@ -1,0 +1,32 @@
+{
+  "listingsCollectionName": "Biz Listings",
+  "adPage": "Equipment",
+  "advertiseText": "Your Equipment Here — Advertise on Lokaal",
+  "advertiseLink": "",
+  "regions": {
+    "432 Midland rgn": ["Midland", "Odessa", "Andrews", "Seminole", "Wink", "Big Spring", "Monahans", "Kermit", "Stanton", "Lamesa", "Gardendale", "Pecos", "Crane", "McCamey", "Fort Stockton"],
+    "806 Lubbock rgn": ["Lubbock", "Levelland", "Brownfield", "Plainview", "Slaton", "Wolfforth", "Shallowater", "Idalou", "Post", "Tahoka", "Littlefield", "Abernathy", "Lorenzo", "Ralls"]
+  },
+  "sections": [
+    {
+      "key": "sale",
+      "label": "Equipment For Sale",
+      "adTitle": "For Sale",
+      "listTitle": "Find Equipment",
+      "addItemLink": "",
+      "sources": [
+        { "domain": "lokaalhub.com", "collectionName": "Equipment", "fields": {} }
+      ]
+    },
+    {
+      "key": "rent",
+      "label": "Equipment For Rent",
+      "adTitle": "For Rent",
+      "listTitle": "Find Rentals",
+      "addItemLink": "",
+      "sources": [
+        { "domain": "lokaalhub.com", "collectionName": "Equipment Rental", "fields": {} }
+      ]
+    }
+  ]
+}
