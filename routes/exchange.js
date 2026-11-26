@@ -103,7 +103,7 @@ const ROLES = {
   gallery: ["gallery", "mediagallery", "photos", "images"],
   desc: ["shortdescription", "description", "details", "introduction"],
   phone: ["phone", "phonenumber", "phone#", "contactphone", "sellerphone", "cell"],
-  seller: ["seller", "sellername", "contactname", "postedby"],
+  seller: ["seller", "sellername", "yourname", "contactname", "postedby"],
   email: ["email", "selleremail", "contactemail"],
   featured: ["featured", "new"],
   order: ["order", "sortorder"],
