@@ -1,0 +1,22 @@
+[
+  {
+    "key": "home",
+    "label": "Home Services",
+    "sub": "Trades for Your Home",
+    "listTitle": "Home Services Trades",
+    "icon": "home",
+    "domain": "https://www.lokaalhome1.com",
+    "collectionName": "Home Biz Cards",
+    "fields": {}
+  },
+  {
+    "key": "pro",
+    "label": "Professional Services",
+    "sub": "Local Business & Professional Services",
+    "listTitle": "Professional Services Trades",
+    "icon": "briefcase",
+    "domain": "https://www.lokaalhub.com",
+    "collectionName": "Hub biz cards",
+    "fields": {}
+  }
+]
