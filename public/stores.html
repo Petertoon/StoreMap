@@ -251,6 +251,9 @@
     .results-head { border-radius: 18px; background: linear-gradient(#7a3220, var(--leather2)); }
     .back, .map-view { background: #fffaf0; border-color: #e6d4b4; }
     .cat-head { margin: 0 -10px; }
+    #scr-prod.show { padding-bottom: 0; }
+    #prod-frame { display: block; width: calc(100% + 20px); margin: 0 -10px; height: calc(100vh - 70px); border: 0; background: #fff; }
+    .prod-wait { text-align: center; padding: 10px; font-weight: 700; color: #7e231a; }
   </style>
 </head>
 <body>
@@ -338,6 +341,13 @@
   </div>
 
   <!-- ================= SCREEN 3: stores directory ================= -->
+  <!-- ================= SCREEN 4: products (the Wix All Products page shown inside this page) ================= -->
+  <div class="screen" id="scr-prod">
+    <button class="back" id="prod-back"><svg><use href="#i-chev-right"/></svg>Back</button>
+    <div class="prod-wait" id="prod-wait">Loading products…</div>
+    <iframe id="prod-frame" title="Products" allow="geolocation"></iframe>
+  </div>
+
   <div class="screen" id="scr-dir">
     <div class="dir-top">
       <button class="back" id="dir-back"><svg><use href="#i-chev-right"/></svg>Back</button>
@@ -400,7 +410,7 @@
 
     // ---- screens (phone Back button works too) ----
     function show(name, push) {
-      ["home", "cat", "dir"].forEach((s) => $("scr-" + s).classList.toggle("show", s === name));
+      ["home", "cat", "dir", "prod"].forEach((s) => $("scr-" + s).classList.toggle("show", s === name));
       window.scrollTo(0, 0);
       if (push) history.pushState({ screen: name, cat: cat && cat.key, dirCat: dirCat && dirCat.key }, "");
     }
@@ -545,24 +555,20 @@
       openCategory(b.dataset.cat);
     });
     // "All Stores" bar opens/closes the list under it
-    // All Products: open the Wix page once, ignore extra taps, and show that it's working
-    let opening = false;
+    // All Products: show the Wix products page inside this page (the app keeps jumping back
+    // when it leaves for another website, so we never leave)
     $("card-products").addEventListener("click", (e) => {
       const url = $("card-products").getAttribute("href");
       e.preventDefault();
-      if (!url || opening) return;
-      opening = true;
-      $("products-text").textContent = "Opening products…";
-      $("card-products").classList.add("off");
-      // The app sometimes swallows the first jump to another website, so if we're still here
-      // after a moment, try again by itself (the "second tap" you were doing by hand).
-      const goNow = () => { try { window.location.assign(url); } catch (err) { window.location.href = url; } };
-      setTimeout(goNow, 100);
-      setTimeout(() => { if (document.visibilityState === "visible") goNow(); }, 1500);
-      setTimeout(() => { if (document.visibilityState === "visible") goNow(); }, 3500);
-      // if the app blocked it, let them try again after a few seconds
-      setTimeout(() => { opening = false; $("card-products").classList.remove("off"); fillCategory(); }, 6000);
+      if (!url) return;
+      $("prod-wait").style.display = "block";
+      const f = $("prod-frame");
+      f.onload = () => { $("prod-wait").style.display = "none"; };
+      if (f.getAttribute("src") !== url) f.setAttribute("src", url);
+      else $("prod-wait").style.display = "none";
+      show("prod", true);
     });
+    $("prod-back").addEventListener("click", () => history.back());
 
     $("count-bar").addEventListener("click", () => {
       const closed = $("count-bar").classList.toggle("closed");
