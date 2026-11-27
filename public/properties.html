@@ -100,7 +100,9 @@
   #filter-panel{position:absolute;top:12px;left:12px;z-index:2;background:#fff;padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:14px}
   #filter-panel label{display:flex;align-items:center;gap:6px;margin:4px 0}
   #filter-panel i{width:10px;height:10px;border-radius:50%;display:inline-block}
-  .styleBtn{position:absolute;top:12px;right:12px;z-index:2;background:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .backBtn{position:absolute;top:12px;right:12px;z-index:3;background:#fff;color:var(--maroon);border:0;border-radius:999px;padding:10px 16px;font-weight:800;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  .centerBtn{position:absolute;left:14px;top:-62px;width:52px;height:52px;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center}
+  .styleBtn{position:absolute;top:64px;right:12px;z-index:2;background:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.2)}
   #bottom-panel{position:absolute;bottom:0;left:0;right:0;z-index:2;transition:transform .28s ease}
   #bottom-panel.collapsed{transform:translateY(calc(100% - 30px))}
   #panel-handle{display:flex;justify-content:center;align-items:center;height:30px;touch-action:none}
@@ -188,12 +190,14 @@
 </div>
 
 <div class="mapwrap hide" id="mapWrap">
-  <div class="maptop"><b id="mapTitle">Map</b><button id="mapClose">‹ Back to List</button></div>
   <div class="mapbody">
+    <span id="mapTitle" class="hide"></span>
     <div id="map"></div>
     <div id="filter-panel"></div>
+    <button class="backBtn" id="mapClose" aria-label="Back">‹ Back</button>
     <button class="styleBtn" id="styleBtn">Map</button>
     <div id="bottom-panel">
+      <button class="centerBtn" id="centerBtn" aria-label="Center map"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"><path d="M21 3 3 10.5l7.5 3L14 21Z"/></svg></button>
       <div id="panel-handle"><div class="bar"></div></div>
       <div id="result-count"></div>
       <div id="card-strip"></div>
@@ -453,6 +457,8 @@
     var t=e.target; if(!t.classList||!t.classList.contains("type-toggle")) return;
     activeTypes[t.value]=t.checked; refreshData(false);
   });
+  // Center button: fit the map back around all the listings shown
+  $("centerBtn").onclick=function(){ if(mbMap) refreshData(true); };
   $("styleBtn").onclick=function(){ if(!mbMap) return; isSat=!isSat; mbMap.setStyle(isSat?SAT:STREET); this.textContent=isSat?"Map":"Satellite"; };
   // Collapsible bottom panel: tap the handle, or swipe it up/down
   (function(){
