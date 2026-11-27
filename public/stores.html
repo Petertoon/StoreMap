@@ -251,8 +251,12 @@
     .results-head { border-radius: 18px; background: linear-gradient(#7a3220, var(--leather2)); }
     .back, .map-view { background: #fffaf0; border-color: #e6d4b4; }
     .cat-head { margin: 0 -10px; }
-    #scr-prod.show { padding-bottom: 0; }
-    #prod-frame { display: block; width: calc(100% + 20px); margin: 0 -10px; height: calc(100vh - 70px); border: 0; background: #fff; }
+    /* products screen fills the whole phone: no page padding, no rounded panel */
+    body.prod-mode { padding: 0; }
+    body.prod-mode #scr-prod.show { border-radius: 0; padding: 0; box-shadow: none; background: var(--panel); }
+    #scr-prod .back { margin: 6px 8px; }
+    #prod-box { position: relative; width: 100vw; overflow: hidden; background: #fff; }
+    #prod-frame { display: block; border: 0; transform-origin: top left; background: #fff; }
     .prod-wait { text-align: center; padding: 10px; font-weight: 700; color: #7e231a; }
   </style>
 </head>
@@ -345,7 +349,7 @@
   <div class="screen" id="scr-prod">
     <button class="back" id="prod-back"><svg><use href="#i-chev-right"/></svg>Back</button>
     <div class="prod-wait" id="prod-wait">Loading products…</div>
-    <iframe id="prod-frame" title="Products" allow="geolocation"></iframe>
+    <div id="prod-box"><iframe id="prod-frame" title="Products" allow="geolocation"></iframe></div>
   </div>
 
   <div class="screen" id="scr-dir">
@@ -411,6 +415,8 @@
     // ---- screens (phone Back button works too) ----
     function show(name, push) {
       ["home", "cat", "dir", "prod"].forEach((s) => $("scr-" + s).classList.toggle("show", s === name));
+      document.body.classList.toggle("prod-mode", name === "prod");
+      if (name === "prod") setTimeout(fitProducts, 0);
       window.scrollTo(0, 0);
       if (push) history.pushState({ screen: name, cat: cat && cat.key, dirCat: dirCat && dirCat.key }, "");
     }
@@ -569,6 +575,22 @@
       show("prod", true);
     });
     $("prod-back").addEventListener("click", () => history.back());
+
+    // The Wix phone layout is 320px wide. Inside a frame the phone doesn't zoom it,
+    // so we zoom it ourselves to fill the screen width.
+    const WIX_MOBILE_WIDTH = 320;
+    function fitProducts() {
+      const box = $("prod-box"), f = $("prod-frame");
+      const w = window.innerWidth;
+      const top = box.getBoundingClientRect().top + window.scrollY;
+      const h = Math.max(300, window.innerHeight - top);
+      const k = w / WIX_MOBILE_WIDTH;
+      box.style.height = h + "px";
+      f.style.width = WIX_MOBILE_WIDTH + "px";
+      f.style.height = (h / k) + "px";
+      f.style.transform = "scale(" + k + ")";
+    }
+    window.addEventListener("resize", () => { if ($("scr-prod").classList.contains("show")) fitProducts(); });
 
     $("count-bar").addEventListener("click", () => {
       const closed = $("count-bar").classList.toggle("closed");
