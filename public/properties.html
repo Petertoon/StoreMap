@@ -90,18 +90,38 @@
   .panel h2{margin:0;display:flex;align-items:center;gap:12px;background:linear-gradient(var(--maroon2),var(--maroon));color:#fff;font-size:20px;padding:12px 16px}
   .addbtn{display:block;margin-top:14px;text-align:center;text-decoration:none;background:var(--cream);color:var(--maroon);border:3px solid var(--tan);border-radius:14px;padding:11px;font-weight:800}
 
-  /* map */
-  .mapwrap{position:fixed;inset:0;z-index:40;background:var(--cream);display:flex;flex-direction:column}
+  /* map — built from the property-map repo (Mapbox satellite, clusters, collapsible card strip) */
+  .mapwrap{position:fixed;inset:0;z-index:40;background:#222;display:flex;flex-direction:column}
   .maptop{display:flex;align-items:center;gap:8px;padding:10px 12px;background:linear-gradient(var(--maroon2),var(--maroon));color:#fff}
-  .maptop b{flex:1;font-size:17px}
-  .maptop button{background:var(--cream);color:var(--maroon);border:0;border-radius:999px;padding:8px 14px;font-weight:800}
-  #map{flex:1}
-  .pin{background:var(--g2);color:#fff;font-weight:800;font-size:12px;padding:3px 7px;border-radius:8px;border:2px solid #fff;box-shadow:0 1px 4px #0007;white-space:nowrap;transform:translate(-50%,-100%);display:inline-block}
-  .pin:after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-5px;border:5px solid transparent;border-top-color:#fff}
-  .leaflet-div-icon{background:none!important;border:0!important}
-  .mapcard{position:absolute;left:10px;right:10px;bottom:14px;z-index:500;background:var(--cream);border-radius:16px;box-shadow:0 4px 16px #0008;display:flex;gap:10px;padding:10px;align-items:center}
-  .mapcard img{width:96px;height:72px;object-fit:cover;border-radius:10px}
-  .mapnote{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:500;background:#000b;color:#fff;font-size:12px;padding:5px 10px;border-radius:999px;white-space:nowrap}
+  .maptop b{flex:1;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .maptop button{background:var(--cream);color:var(--maroon);border:0;border-radius:999px;padding:8px 12px;font-weight:800;font-size:14px;white-space:nowrap}
+  .mapbody{position:relative;flex:1}
+  #map{position:absolute;inset:0}
+  #filter-panel{position:absolute;top:12px;left:12px;z-index:2;background:#fff;padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:14px}
+  #filter-panel label{display:flex;align-items:center;gap:6px;margin:4px 0}
+  #filter-panel i{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .styleBtn{position:absolute;top:12px;right:12px;z-index:2;background:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  #bottom-panel{position:absolute;bottom:0;left:0;right:0;z-index:2;transition:transform .28s ease}
+  #bottom-panel.collapsed{transform:translateY(calc(100% - 30px))}
+  #panel-handle{display:flex;justify-content:center;align-items:center;height:30px;touch-action:none}
+  #panel-handle .bar{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.85);box-shadow:0 1px 3px #0008}
+  #result-count{text-align:center;font-weight:600;font-size:15px;padding-bottom:4px;color:#fff;text-shadow:0 1px 3px #000}
+  #card-strip{display:flex;gap:10px;overflow-x:auto;padding:0 12px 14px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  .listing-card{flex:0 0 260px;scroll-snap-align:start;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.25);
+    text-decoration:none;color:inherit;display:block;transition:transform .15s ease;border:0;padding:0;text-align:left;font:inherit}
+  .listing-card.active{transform:translateY(-4px);box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .card-photo{width:100%;height:130px;background:#e2e2e2;display:flex;align-items:center;justify-content:center}
+  .card-photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .card-photo-fallback::before{content:"🏠";font-size:32px;opacity:.4}
+  .listing-card .card-body{padding:8px 10px 10px}
+  .card-top-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .listing-card .card-price{font-size:17px;font-weight:700}
+  .card-status{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:3px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0;background:#e0e0e0;color:#333}
+  .card-status.status-sale{background:#d7f0dd;color:#1e6b34}
+  .card-status.status-rent{background:#dce8fb;color:#1a4c96}
+  .card-status.status-pending{background:#fbe9cf;color:#93590a}
+  .listing-card .card-meta{font-size:12px;color:#444;margin:2px 0}
+  .listing-card .card-address{font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
   /* popup */
   .pop{position:fixed;inset:0;background:#000b;display:none;align-items:flex-end;justify-content:center;z-index:60}
@@ -169,7 +189,16 @@
 
 <div class="mapwrap hide" id="mapWrap">
   <div class="maptop"><b id="mapTitle">Map</b><button id="mapClose">‹ Back to List</button></div>
-  <div style="position:relative;flex:1;display:flex"><div id="map"></div><div class="mapnote hide" id="mapNote"></div><div id="mapCard"></div></div>
+  <div class="mapbody">
+    <div id="map"></div>
+    <div id="filter-panel"></div>
+    <button class="styleBtn" id="styleBtn">Map</button>
+    <div id="bottom-panel">
+      <div id="panel-handle"><div class="bar"></div></div>
+      <div id="result-count"></div>
+      <div id="card-strip"></div>
+    </div>
+  </div>
 </div>
 <div class="pop" id="pop"><div class="sheet" id="sheet"></div></div>
 
@@ -312,42 +341,127 @@
       (s&&s.addItemLink?'<a class="addbtn" href="'+esc(s.addItemLink)+'" target="_blank" rel="noopener">＋ List Your Property</a>':'');
   }
 
-  // ---------- map (Leaflet + OpenStreetMap, loaded on first use) ----------
-  function loadLeaflet(cb){
-    if(window.L) return cb();
-    var css=document.createElement("link"); css.rel="stylesheet"; css.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"; document.head.appendChild(css);
-    var js=document.createElement("script"); js.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"; js.onload=cb;
-    js.onerror=function(){alert("The map couldn't load. Check your connection and try again.");}; document.head.appendChild(js);
+  // ---------- map: Mapbox, same setup as the property-map repo ----------
+  var MAPBOX_TOKEN="pk.eyJ1IjoicGV0ZXJ0b29uIiwiYSI6ImNtdDduZ3R4aTFxNmkyeXE3cWh0MDRkeWEifQ.syesHqacjBr298HCaXcihQ";
+  var SAT="mapbox://styles/mapbox/satellite-streets-v12", STREET="mapbox://styles/mapbox/streets-v12";
+  var mbMap=null, mapList=[], activeTypes={}, mapMissing=0, isSat=true, firstFit=true;
+  function loadMapbox(cb){
+    if(window.mapboxgl) return cb();
+    var c=document.createElement("link"); c.rel="stylesheet"; c.href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css"; document.head.appendChild(c);
+    var j=document.createElement("script"); j.src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"; j.onload=cb;
+    j.onerror=function(){alert("The map couldn't load. Check your connection and try again.");}; document.head.appendChild(j);
+  }
+  function statusClass(st){ st=String(st||"").toLowerCase(); return st.indexOf("sale")>=0?"status-sale":st.indexOf("rent")>=0?"status-rent":/pending|hold/.test(st)?"status-pending":""; }
+  function cardPrice(it){ return short(it).replace("/nt",it.priceSuffix&&it.priceNum?" /night":""); }
+  function metaLine(it){
+    var a=[]; if(it.beds) a.push(it.beds+" bd"); if(it.baths) a.push(it.baths+" ba"); if(it.sqft) a.push(fmt(it.sqft)+" sqft");
+    if(it.acres) a.push(fmt(it.acres)+" acres"); if(it.sleeps) a.push("sleeps "+it.sleeps); return a.join(" | ");
+  }
+  function geojson(){
+    return {type:"FeatureCollection",features:mapList.filter(function(it){return activeTypes[it.sec];}).map(function(it){
+      return {type:"Feature",geometry:{type:"Point",coordinates:[it.lng,it.lat]},properties:{id:it.id,priceLabel:short(it),color:color(it.sec)}};
+    })};
+  }
+  function addLayers(){
+    if(mbMap.getSource("listings")) return;
+    mbMap.addSource("listings",{type:"geojson",data:geojson(),cluster:true,clusterMaxZoom:13,clusterRadius:50});
+    mbMap.addLayer({id:"clusters",type:"circle",source:"listings",filter:["has","point_count"],
+      paint:{"circle-color":"#b3121a","circle-radius":["step",["get","point_count"],18,10,24,30,32],"circle-opacity":0.85}});
+    mbMap.addLayer({id:"cluster-count",type:"symbol",source:"listings",filter:["has","point_count"],
+      layout:{"text-field":["get","point_count_abbreviated"],"text-size":13},paint:{"text-color":"#fff"}});
+    mbMap.addLayer({id:"unclustered-point",type:"circle",source:"listings",filter:["!",["has","point_count"]],
+      paint:{"circle-color":["get","color"],"circle-radius":6,"circle-stroke-width":2,"circle-stroke-color":"#fff"}});
+    mbMap.addLayer({id:"highlight",type:"circle",source:"listings",filter:["==",["get","id"],""],
+      paint:{"circle-color":"#ffd24a","circle-radius":10,"circle-stroke-width":3,"circle-stroke-color":"#fff"}});
+    mbMap.addLayer({id:"unclustered-price-label",type:"symbol",source:"listings",filter:["!",["has","point_count"]],
+      layout:{"text-field":["get","priceLabel"],"text-size":12,"text-offset":[0,-1.6],"text-font":["DIN Pro Medium","Arial Unicode MS Bold"]},
+      paint:{"text-color":["get","color"],"text-halo-color":"#fff","text-halo-width":1.5}});
+  }
+  function refreshData(fit){
+    var src=mbMap.getSource("listings"); if(src) src.setData(geojson());
+    if(fit){
+      var pts=mapList.filter(function(it){return activeTypes[it.sec];});
+      if(pts.length===1) mbMap.jumpTo({center:[pts[0].lng,pts[0].lat],zoom:13});
+      else if(pts.length){ var b=new mapboxgl.LngLatBounds(); pts.forEach(function(it){b.extend([it.lng,it.lat]);}); mbMap.fitBounds(b,{padding:60,maxZoom:13,duration:0}); }
+    }
+    renderCardStrip();
   }
   function openMap(){
-    var list=sec?filtered():D.items.filter(inArea);
+    var all=sec?filtered():D.items.filter(inArea);
+    mapList=all.filter(function(it){return it.lat!=null&&it.lng!=null;});
+    mapMissing=all.length-mapList.length;
     var s=D.sections.filter(function(x){return x.key===sec;})[0];
     $("mapTitle").textContent=(s?s.label:"All Properties")+(city?" — "+city:region?" — "+region:"");
-    $("mapWrap").classList.remove("hide"); $("mapCard").innerHTML="";
-    loadLeaflet(function(){
-      if(!map){
-        map=L.map("map",{zoomControl:true}).setView(D.mapCenter||[32,-102.1],8);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
-        map.on("click",function(){$("mapCard").innerHTML="";});
+    D.sections.forEach(function(x){ activeTypes[x.key]=!sec||x.key===sec; });
+    $("filter-panel").innerHTML=D.sections.map(function(x){
+      return '<label><input type="checkbox" class="type-toggle" value="'+esc(x.key)+'"'+(activeTypes[x.key]?' checked':'')+'><i style="background:'+esc(x.color||"#b3121a")+'"></i>'+esc(x.label.replace(/ Properties$/,"").replace("Vacation Homes & Venues","Vacation & Venues"))+'</label>';
+    }).join("");
+    $("bottom-panel").classList.remove("collapsed");
+    $("mapWrap").classList.remove("hide");
+    loadMapbox(function(){
+      mapboxgl.accessToken=MAPBOX_TOKEN;
+      if(!mbMap){
+        mbMap=new mapboxgl.Map({container:"map",style:SAT,center:[(D.mapCenter||[32.85,-102.63])[1],(D.mapCenter||[32.85,-102.63])[0]],zoom:9});
+        mbMap.on("style.load",function(){ addLayers(); refreshData(firstFit); firstFit=false; });
+        mbMap.on("moveend",renderCardStrip);
+        // Tap a pin -> open the panel, scroll to its card and highlight it
+        mbMap.on("click","unclustered-point",function(e){
+          var id=e.features[0].properties.id;
+          $("bottom-panel").classList.remove("collapsed");
+          var card=$("card-strip").querySelector('.listing-card[data-id="'+id.replace(/"/g,"")+'"]');
+          if(card) card.scrollIntoView({behavior:"smooth",inline:"start",block:"nearest"});
+          highlightCard(id);
+        });
+        // Tap a cluster -> zoom in
+        mbMap.on("click","clusters",function(e){
+          var cid=e.features[0].properties.cluster_id;
+          mbMap.getSource("listings").getClusterExpansionZoom(cid,function(err,zoom){ if(!err) mbMap.easeTo({center:e.features[0].geometry.coordinates,zoom:zoom}); });
+        });
+      } else {
+        setTimeout(function(){ mbMap.resize(); refreshData(true); },60);
       }
-      setTimeout(function(){map.invalidateSize();},50);
-      if(layer) layer.remove(); layer=L.layerGroup().addTo(map);
-      var pts=[], missing=0;
-      list.forEach(function(it){
-        if(it.lat==null||it.lng==null){missing++;return;}
-        var icon=L.divIcon({className:"",html:'<span class="pin" style="background:'+color(it.sec)+'">'+esc(short(it))+'</span>',iconSize:[0,0]});
-        L.marker([it.lat,it.lng],{icon:icon}).addTo(layer).on("click",function(e){ L.DomEvent.stopPropagation(e); showCard(it); });
-        pts.push([it.lat,it.lng]);
-      });
-      if(pts.length===1) map.setView(pts[0],14); else if(pts.length) map.fitBounds(pts,{padding:[40,40],maxZoom:14});
-      var note=$("mapNote"); note.classList.toggle("hide",!missing);
-      note.textContent=missing+" listing"+(missing===1?"":"s")+" not on the map yet (no location)";
     });
   }
-  function showCard(it){
-    $("mapCard").innerHTML='<div class="mapcard">'+(it.image?'<img src="'+esc(it.image)+'" alt="">':'')+'<div class="t"><b>'+esc(it.title)+'</b><div class="s2">'+esc(sizeLine(it)||it.type)+'</div>'+priceHtml(it)+'</div>'+
-      '<button class="searchbtn" style="padding:10px 14px;font-size:15px" data-id="'+esc(it.id)+'">View</button></div>';
+  function highlightCard(id){
+    Array.prototype.forEach.call(document.querySelectorAll(".listing-card"),function(c){c.classList.toggle("active",c.getAttribute("data-id")===id);});
+    if(mbMap&&mbMap.getLayer("highlight")) mbMap.setFilter("highlight",["==",["get","id"],id||""]);
   }
+  // Cards = properties inside the current map view
+  function renderCardStrip(){
+    if(!mbMap) return;
+    // whole screen area (getBounds() can leave out the padded edges)
+    var cv=mbMap.getCanvas(), w=cv.clientWidth, h=cv.clientHeight;
+    var b=new mapboxgl.LngLatBounds(mbMap.unproject([0,h]), mbMap.unproject([w,0]));
+    var visible=mapList.filter(function(it){return activeTypes[it.sec]&&b.contains([it.lng,it.lat]);});
+    $("result-count").textContent=(visible.length?visible.length+" propert"+(visible.length===1?"y":"ies"):"No properties in view")+(mapMissing?" · "+mapMissing+" not on map yet":"");
+    $("card-strip").innerHTML=visible.map(function(it){
+      return '<button class="listing-card" data-id="'+esc(it.id)+'">'+
+        '<div class="card-photo'+(it.image?'':' card-photo-fallback')+'">'+(it.image?'<img src="'+esc(it.image)+'" alt="" loading="lazy" onerror="this.parentElement.classList.add(\'card-photo-fallback\');this.remove();">':'')+'</div>'+
+        '<div class="card-body"><div class="card-top-row"><div class="card-price">'+esc(cardPrice(it))+'</div>'+(it.listing?'<div class="card-status '+statusClass(it.listing)+'">'+esc(it.listing)+'</div>':'')+'</div>'+
+        '<div class="card-meta">'+esc(metaLine(it)||it.type)+'</div><div class="card-address">'+esc(it.address||it.title)+'</div></div></button>';
+    }).join("");
+  }
+  // Swiping the cards highlights the matching pin
+  $("card-strip").addEventListener("scroll",function(){
+    clearTimeout(this._t); var el=this;
+    this._t=setTimeout(function(){
+      var best=null,bd=1e9; Array.prototype.forEach.call(el.children,function(c){var d=Math.abs(c.offsetLeft-el.scrollLeft-12); if(d<bd){bd=d;best=c;}});
+      if(best) highlightCard(best.getAttribute("data-id"));
+    },120);
+  });
+  document.addEventListener("change",function(e){
+    var t=e.target; if(!t.classList||!t.classList.contains("type-toggle")) return;
+    activeTypes[t.value]=t.checked; refreshData(false);
+  });
+  $("styleBtn").onclick=function(){ if(!mbMap) return; isSat=!isSat; mbMap.setStyle(isSat?SAT:STREET); this.textContent=isSat?"Map":"Satellite"; };
+  // Collapsible bottom panel: tap the handle, or swipe it up/down
+  (function(){
+    var panel=$("bottom-panel"), handle=$("panel-handle"), y0=null;
+    handle.addEventListener("click",function(){panel.classList.toggle("collapsed");});
+    handle.addEventListener("touchstart",function(e){y0=e.touches[0].clientY;},{passive:true});
+    handle.addEventListener("touchend",function(e){ if(y0==null) return; var d=e.changedTouches[0].clientY-y0;
+      if(d>25) panel.classList.add("collapsed"); else if(d<-25) panel.classList.remove("collapsed"); y0=null; });
+  })();
   $("mapBar").onclick=openMap;
   $("mapClose").onclick=function(){$("mapWrap").classList.add("hide");};
 
