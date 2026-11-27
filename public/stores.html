@@ -554,9 +554,12 @@
       opening = true;
       $("products-text").textContent = "Opening products…";
       $("card-products").classList.add("off");
-      setTimeout(() => {
-        try { window.top.location.href = url; } catch (err) { window.location.href = url; }
-      }, 150);
+      // The app sometimes swallows the first jump to another website, so if we're still here
+      // after a moment, try again by itself (the "second tap" you were doing by hand).
+      const goNow = () => { try { window.location.assign(url); } catch (err) { window.location.href = url; } };
+      setTimeout(goNow, 100);
+      setTimeout(() => { if (document.visibilityState === "visible") goNow(); }, 1500);
+      setTimeout(() => { if (document.visibilityState === "visible") goNow(); }, 3500);
       // if the app blocked it, let them try again after a few seconds
       setTimeout(() => { opening = false; $("card-products").classList.remove("off"); fillCategory(); }, 6000);
     });
